@@ -1,0 +1,13 @@
+{
+    "name": "flamingo-wallet",
+    "version": "0.1.0",
+    "type": "commonjs",
+    "description": "Flamingo Wallet - orchestration layer for flamingo-node and flamingo-ui",
+    "scripts": {
+        "dev": "node lib/dev.js",
+        "dev-legacy": "node lib/dev.js --legacy",
+        "init-network": "node lib/init-network.js"
+    },
+    "dependencies": {},
+    "license": "MIT"
+}
