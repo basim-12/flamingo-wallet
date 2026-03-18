@@ -1,0 +1,21 @@
+{
+  "name": "Default 3-Node Ring",
+  "description": "User <-> Hub <-> Merchant with bidirectional channels",
+  "bitcoin": {
+    "rpcuser": "user",
+    "rpcpassword": "password",
+    "rpcport": "18443",
+    "wallet": "regtestwallet"
+  },
+  "nodes": [
+    { "name": "User",     "dir": "/data/lightning4", "fund": 5 },
+    { "name": "Hub",      "dir": "/data/lightning5", "fund": 5 },
+    { "name": "Merchant", "dir": "/data/lightning6", "fund": 5 }
+  ],
+  "channels": [
+    { "from": "User",     "to": "Hub",      "capacity": 1000000 },
+    { "from": "Hub",      "to": "Merchant", "capacity": 1000000 },
+    { "from": "Merchant", "to": "Hub",      "capacity": 1000000 },
+    { "from": "Hub",      "to": "User",     "capacity": 1000000 }
+  ]
+}

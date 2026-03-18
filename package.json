@@ -2,12 +2,23 @@
     "name": "flamingo-wallet",
     "version": "0.1.0",
     "type": "commonjs",
-    "description": "Flamingo Wallet - orchestration layer for flamingo-node and flamingo-ui",
+    "description": "Flamingo Wallet - Bitcoin Lightning Network wallet application",
     "scripts": {
-        "dev": "node lib/dev.js",
-        "dev-legacy": "node lib/dev.js --legacy",
-        "init-network": "node lib/init-network.js"
+        "build": "browserify web/page.js -i STATE -o bundle.js && browserify web/dev.js -o debug.bundle.js",
+        "dev": "budo web/page.js:bundle.js --dir ./pages --dir ./ --dir ./node_modules --live --open -- -i STATE",
+        "dev-debug": "budo web/dev.js:bundle.js --dir ./ --live --host 0.0.0.0",
+        "node": "fw init . 2>/dev/null; fw up",
+        "start": "npm run node & npm run dev",
+        "start-dev": "npm run node & npm run dev-debug",
+        "run": "fw run scenario.json"
     },
-    "dependencies": {},
+    "dependencies": {
+        "flamingo-ui": "file:../flamingo-ui",
+        "flamingo-node": "file:../flamingo-node"
+    },
+    "devDependencies": {
+        "budo": "^11.8.4",
+        "browserify": "^17.0.1"
+    },
     "license": "MIT"
 }

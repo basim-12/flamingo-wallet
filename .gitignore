@@ -1,3 +1,5 @@
-/node_modules/*
+/node_modules
 /package-lock.json
 .DS_Store
+bundle.js
+debug.bundle.js
