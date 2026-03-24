@@ -18,7 +18,7 @@ This will:
 |---------|-------------|
 | `npm start` | Start backend + frontend together |
 | `npm run dev` | Start frontend only (new wallet UI) |
-| `npm run dev-legacy` | Start frontend only (legacy dev dashboard) |
+| `npm run dev-debug` | Start frontend only (legacy dev dashboard) |
 | `npm run build` | Build production bundles |
 | `npm run node` | Start backend only (Docker) |
 | `npm run run` | Initialize network from `scenario.json` |
@@ -52,3 +52,10 @@ See [flamingo-node README](https://github.com/basim-12/flamingo-node#network-sce
 ## License
 
 MIT
+
+## Related Repositories
+
+- [flamingo-node](https://github.com/playproject-io/flamingo-node) — Backend: bitcoind, lightningd, WebSocket bridge
+- [flamingo-docker](https://github.com/playproject-io/flamingo-docker) — Docker environment for the stack
+- [flamingo-wallet](https://github.com/playproject-io/flamingo-wallet) — Main entry point & orchestration
+- [flamingo-ui](https://github.com/playproject-io/flamingo-ui) — Reusable UI component library

@@ -1,6 +1,16 @@
 const STATE = require('STATE')
 const statedb = STATE(__filename)
-statedb.admin()
 
-// Load the wallet UI
-require('flamingo-ui/src/node_modules/wallet') // now a re-useable module
+const wallet = require('flamingo-ui')
+
+function defaults () {
+  return {
+    drive: {},
+    _: {}
+  }
+}
+
+const { sdb } = statedb(defaults)
+const [{ sid }] = sdb.onwatch(() => {})
+
+document.body.append(wallet(sid))

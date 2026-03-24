@@ -1,0 +1,9473 @@
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const general_button = require('general_button')
+const send_btc = require('send_btc')
+const receive_btc = require('receive_btc')
+
+module.exports = action_buttons
+
+async function action_buttons(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+  const _ = { send_general: null, receive_general: null }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="action-buttons-container">
+      <div class="send-receive-buttons">
+        <div id="send-button-container"></div>
+        <div id="receive-button-container"></div>
+      </div>
+      <div class="overlay send-overlay hidden"></div>
+      <div class="overlay receive-overlay hidden"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const send_container = shadow.querySelector('#send-button-container')
+  const receive_container = shadow.querySelector('#receive-button-container')
+  const send_overlay = shadow.querySelector('.send-overlay')
+  const receive_overlay = shadow.querySelector('.receive-overlay')
+
+  const subs = await sdb.watch(onbatch)
+
+  const sendUp = protocol ? protocol(msg => console.log('[action_buttons]:', msg)) : null
+
+  // -------------------- Buttons --------------------
+  const send_button = await general_button(subs[0], button_protocol('send_general'))
+  const receive_button = await general_button(subs[1], button_protocol('receive_general'))
+
+  send_container.appendChild(send_button)
+  receive_container.appendChild(receive_button)
+
+  send_button._action = 'send_message'
+  receive_button._action = 'receive_message'
+
+  let send_el = null, receive_el = null
+
+  // -------------------- Overlay helpers --------------------
+  function close_all_overlays(except) {
+    if (except !== 'send') send_overlay.classList.add('hidden')
+    if (except !== 'receive') receive_overlay.classList.add('hidden')
+  }
+
+  function handle_outside_click(event) {
+    const target = event.target
+    const clicked_inside =
+      send_overlay.contains(target) || receive_overlay.contains(target)
+    const clicked_button =
+      send_button.contains(target) || receive_button.contains(target)
+
+    if (!clicked_inside && !clicked_button) close_all_overlays(null)
+  }
+
+  shadow.addEventListener('click', handle_outside_click)
+
+  // -------------------- Button Clicks --------------------
+  send_button.onclick = async (e) => {
+    e.stopPropagation()
+    if (send_button._action !== 'send_message') return
+    close_all_overlays('send')
+
+    if (!send_el) {
+      send_el = await send_btc(subs[2], { onClose: () => send_overlay.classList.add('hidden') })
+      send_overlay.appendChild(send_el)
+    }
+
+    send_overlay.classList.remove('hidden')
+    sendUp?.({ from: 'action_buttons', type: 'send', data: null })
+  }
+
+  receive_button.onclick = async (e) => {
+    e.stopPropagation()
+    if (receive_button._action !== 'receive_message') return
+    close_all_overlays('receive')
+
+    if (!receive_el) {
+      receive_el = await receive_btc(subs[3], { onClose: () => receive_overlay.classList.add('hidden') })
+      receive_overlay.appendChild(receive_el)
+    }
+
+    receive_overlay.classList.remove('hidden')
+    sendUp?.({ from: 'action_buttons', type: 'receive', data: null })
+  }
+
+  // -------------------- Initial Config --------------------
+  _.send_general?.({ type: 'button_name', data: { name: 'Send', action: 'send_message' } })
+  _.receive_general?.({ type: 'button_name', data: { name: 'Receive', action: 'receive_message' } })
+
+  return el
+
+  // -------------------- Helpers --------------------
+  function fail(data, type) { throw new Error('Invalid message type', { cause: { data, type } }) }
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const handler = on[type] || fail
+      handler(data, type)
+    }
+  }
+  function inject(data) { style.textContent = data[0] }
+  async function ondata(data) { const buttonData = data[0]?.value || {} }
+  function button_protocol(key) { return send => { _[key] = send; return send } }
+}
+
+// -------------------- Fallback for STATE --------------------
+function fallback_module() {
+  
+  return {
+    api,
+    _: { 'general_button': { $: '' }, 'send_btc': { $: '' }, 'receive_btc': { $: '' } }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const general_button = { mapping: { style: 'style', data: 'data' }, 0: {}, 1: {} }
+    const send_btc = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 2: '' }
+    const receive_btc = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 3: '' }
+
+    return {
+      drive: {
+        'style/': { 'action_buttons.css': { '$ref': 'action_buttons.css' } },
+        'data/': { 'opts.json': { raw: opts  || {}} }
+      },
+      _: { general_button, send_btc, receive_btc }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/action_buttons/action_buttons.js")
+},{"STATE":57,"general_button":17,"receive_btc":35,"send_btc":40}],2:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const gen_invite_code = require('gen_invite_code')
+const add_new_contact = require('add_new_contact')
+
+module.exports = add_contact_popup
+
+async function add_contact_popup (opts = {}, { onClose } = {}) {
+  const { sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let icons = []
+  let show_component = false 
+
+  shadow.innerHTML = `
+    <div class="more-menu-container"></div>
+    <div class="gen-invite hidden"></div>
+    <div class="add-new hidden"></div>
+    <style></style>
+  `
+  el.classList.add('position')
+
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.more-menu-container')
+  const gen_invite_el = shadow.querySelector('.gen-invite')
+  const add_new_el = shadow.querySelector('.add-new')
+
+  const subs = await sdb.watch(onbatch)
+
+  let invite_mounted = false
+  let add_new_mounted = false
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => {
+          return drive.get(path).then(file => file.raw)
+        })
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata() {
+
+    if (show_component) return
+
+    row.innerHTML = `
+      <div class="container-title">
+        <div class="title">Add Contact</div>
+        <div class="close-icon">${icons[0]}</div>
+      </div>
+
+      <div class="option-container" id="invite-option">
+        <div class="dot-icon">${icons[1]}</div>
+        <div class="option-label">Generate Invite Code</div>
+      </div>
+      <div class="option-container" id="add-new-option">
+        <div class="dot-icon">${icons[2]}</div>
+        <div class="option-label">Add new contact</div>
+      </div>
+    `
+
+    const close_btn = row.querySelector('.close-icon')
+    const invite_btn = row.querySelector('#invite-option')
+    const add_new_btn = row.querySelector('#add-new-option')
+
+    // close button functionality
+    close_btn.addEventListener('click', () => {
+      if (onClose) onClose()
+    })
+
+    // invite button functionality
+    invite_btn.addEventListener('click', async () => {
+      el.classList.remove('position')
+      gen_invite_el.classList.remove('hidden')
+
+      if (!invite_mounted) {
+        const gen_invite_comp = await gen_invite_code(subs[0],{ 
+          onClose: () => {
+            el.classList.add('position')
+            gen_invite_el.classList.add('hidden')
+
+          }})
+        gen_invite_el.append(gen_invite_comp)
+        invite_mounted = true
+      }
+    })
+
+    // add new button functionality
+    add_new_btn.addEventListener('click', async () => {
+      el.classList.remove('position')
+      add_new_el.classList.remove('hidden')
+
+      if (!add_new_mounted){
+        const add_new_comp = await add_new_contact(subs[1],{
+          onClose: () => {
+            el.classList.add('position')
+            add_new_el.classList.add('hidden')
+          }})
+        add_new_el.append(add_new_comp)
+        add_new_mounted = true
+      }
+    })
+  }
+
+  function fail(data, type) {
+    console.error('[FAIL]', data, type)
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  function iconject(data) {
+    icons = data
+  }
+}
+
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+    _: {
+      'gen_invite_code': { $: '' },
+      'add_new_contact': { $: '' },
+    }
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const gen_invite_code = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: {}
+    }
+
+    const add_new_contact = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      1: {}
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+          'link.svg': { '$ref': 'link.svg' },
+          'user_add.svg': { '$ref': 'user_add.svg' },
+        },
+        'style/': {
+          'style.css': { '$ref': 'add_contact_popup.css' },
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          },
+        }
+      },
+      _: { gen_invite_code, add_new_contact }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/add_contact_popup/add_contact_popup.js")
+},{"STATE":57,"add_new_contact":3,"gen_invite_code":16}],3:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const create_button = require('button')
+const input_field = require('input_field')
+
+module.exports = add_new_contact
+
+async function add_new_contact(opts = {},  { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="create-invoice-container">
+      <div class="create-invoice-header">  
+        <div class="title-container"> 
+          <div class="create-invoice-header">Add new contact</div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+  
+      <div class="extra-input1"></div>
+      <div class="extra-input2"></div>
+      <div class="connect_button"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+
+  const create_button_component = shadow.querySelector('.connect_button')
+  const input1_component = shadow.querySelector('.extra-input1')
+  const input2_component = shadow.querySelector('.extra-input2')
+
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await create_button(subs[0])
+  const input1 = await input_field(subs[1])
+  const input2 = await input_field(subs[2])
+
+  create_button_component.append(button_component)
+  input1_component.append(input1)
+  input2_component.append(input2)
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      if (onClose) onClose()
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const x_icon = shadow.querySelector('.x-icon')
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'input_field': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Connect'
+      }    
+    } 
+
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      1: {
+        header: 'Nickname',
+        placeholder: 'Luis Fedrick',
+      },
+      2:{
+        header: 'Paste the invite code',
+        placeholder: '221341'
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'add_new_contact.css': {
+            '$ref': 'add_new_contact.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        input_field,
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/add_new_contact/add_new_contact.js")
+},{"STATE":57,"button":8,"input_field":21}],4:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const btc_usd_rate = require('btc_usd_rate')
+
+module.exports = btc_input_card
+
+async function btc_input_card (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  
+  const on = {
+    style: inject,
+    data: ondata,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="btc-card"></div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.btc-card')
+  
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+    let {
+      currency = "BTC",
+      amount = 0,
+      usdValue: usd_value = 0,
+      balance = 0, 
+      show_balance = true
+    } = data[0]
+
+    const EXCHANGE_RATE = await btc_usd_rate('btc', 'usd')
+
+    container.innerHTML = `
+      <div class="header">
+        <span class="toggle ${currency === 'BTC' ? 'active' : ''}" data-currency="BTC">BTC</span>
+        <span class="toggle ${currency === 'USD' ? 'active' : ''}" data-currency="USD">USD</span>
+      </div>
+
+      <div class="main-area"> 
+        <div class="amount-row">
+          <input type="number" min="0" step="0.0001" value="0" class="amount-input" data-cleared="0" />
+          <div class="actions">
+            <button class="close-btn">✕</button>
+            <button class="btn half-btn">Half</button>
+            <button class="btn all-btn">All</button>
+          </div>
+        </div>
+        <div class="error"></div>
+        ${show_balance ? `<div class="balance">Balance ${balance} BTC</div>` : ""}
+        <div class="usd-text">
+          You are sending 
+          <strong>USD ${(amount * EXCHANGE_RATE).toFixed(2)}</strong>
+        </div>
+      </div>
+    `
+
+    const amount_input = container.querySelector('.amount-input')
+    const half_btn = container.querySelector('.half-btn')
+    const all_btn = container.querySelector('.all-btn')
+    const btc_toggle = container.querySelector('[data-currency="BTC"]')
+    const usd_toggle = container.querySelector('[data-currency="USD"]')
+    const usd_text = container.querySelector('.usd-text strong')
+    const close_btn = container.querySelector('.close-btn')
+    const error_div = container.querySelector('.error')
+    const toggles = container.querySelectorAll('.toggle')
+
+    // Wipe input on first click
+    amount_input.onclick = () => {
+      if (amount_input.dataset.cleared === "0") {
+        amount_input.value = ""
+        amount_input.dataset.cleared = "1"
+      }
+    }
+    
+    function showError(msg) {
+      if (msg) {
+        error_div.innerHTML = `<div class="divider"></div>${msg}`
+      } else {
+        error_div.innerHTML = ""
+      }
+    }
+
+    function update_values(newAmountBTC) {
+      amount = parseFloat(newAmountBTC) || 0
+      usd_value = (amount * EXCHANGE_RATE).toFixed(2)
+      if (amount > balance) {
+        showError("Insufficient balance, please add funds to your account")
+      } else {
+        showError("")
+      }
+    }
+
+    function update_display(value, curr) {
+      amount_input.value = value
+      amount_input.dataset.cleared = "0" // reset wipe flag
+
+      usd_text.textContent = curr === 'BTC'
+        ? `USD ${usd_value}`
+        : `${amount} BTC`
+
+      toggles.forEach(t => t.classList.remove('active'))
+      if (curr === 'BTC') {
+        btc_toggle.classList.add('active')
+      } else {
+        usd_toggle.classList.add('active')
+      }
+    }
+
+    function on_toggle_btc() {
+      currency = 'BTC'
+      update_display(amount, currency)
+    }
+
+    function on_toggle_usd() {
+      currency = 'USD'
+      update_display(usd_value, currency)
+    }
+
+    function on_half_click() {
+      amount = balance / 2
+      usd_value = (amount * EXCHANGE_RATE).toFixed(2)
+      update_display(currency === 'BTC' ? amount : usd_value, currency)
+      showError("")
+    }
+
+    function on_all_click() {
+      amount = balance
+      usd_value = (amount * EXCHANGE_RATE).toFixed(2)
+      update_display(currency === 'BTC' ? amount : usd_value, currency)
+      showError("")
+    }
+
+    function on_close_click() {
+      amount = 0
+      usd_value = 0
+      update_display(currency === 'BTC' ? amount : usd_value, currency)
+      showError("")
+    }
+
+    function on_amount_input() {
+      let val = amount_input.value;
+
+      if (val < 0) val = '';
+
+      if (val === "" || isNaN(val)) {
+        val = "0";
+      }
+
+      if (val.includes('.')) {
+        let [int_part, dec_part] = val.split('.');
+        if (currency === 'BTC') {
+          int_part = int_part.slice(0, 5); // Limited to 99,999 BTC
+          dec_part = dec_part.slice(0, 8);  // Lowest denomination is 0.00000001 BTC
+        } else {
+          int_part = int_part.slice(0, 10); // Limited to 1 billion USD
+          dec_part = dec_part.slice(0, 1); // Lowest denomination is 0.1 USD
+        }
+        val = int_part + (dec_part ? '.' + dec_part : '');
+      }else {
+        if (currency === 'BTC') {
+          val = val.slice(0, 5);
+        } else {
+          val = val.slice(0, 10);
+        }
+      }
+
+      if (currency === 'BTC') {
+        amount = parseFloat(val) || 0;
+        usd_value = (amount * EXCHANGE_RATE).toFixed(2);
+      } else {
+        usd_value = parseFloat(val) || 0;
+        amount = +(usd_value / EXCHANGE_RATE).toFixed(8); 
+      }
+
+      if (amount > balance) {
+        showError("Insufficient balance, please add funds to your account");
+      } else {
+        showError("");
+      }
+
+      usd_text.textContent = currency === 'BTC'
+        ? `USD ${usd_value}`
+        : `${amount.toFixed(8)} BTC`;
+    }
+
+    btc_toggle.onclick = on_toggle_btc
+    usd_toggle.onclick = on_toggle_usd
+    half_btn.onclick = on_half_click
+    all_btn.onclick = on_all_click
+    close_btn.onclick = on_close_click
+    amount_input.oninput = on_amount_input 
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'style/': {
+          'style.css': {
+            '$ref': 'btc_input_card.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          },
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_input_card/btc_input_card.js")
+},{"STATE":57,"btc_usd_rate":7}],5:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = btc_nodes
+
+async function btc_nodes (opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  let dricons = []
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="nodes-card"></div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.nodes-card')
+
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+   
+
+
+function iconject(data) {
+  dricons = data  
+}
+
+async function ondata (data) {
+  container.innerHTML = `
+    <div class="header">
+      <div class="dropdown">
+        <button class="dropdown-btn">Bitcoin Nodes <span class="arrow"></span></button>
+      </div>        
+      <button class="close-btn">✕</button>
+    </div>
+    <div class="node-btn-wrap">
+      <button class="node-btn">Node</button>
+    </div>
+    <div class="tab-indicator">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+    </div>
+    <div class="logs-wrap">
+      <label>Logs</label>
+      <textarea class="logs-textarea"></textarea>
+    </div>
+  `
+
+  // now insert icon if we already have it
+  if (dricons.length) {
+    const arrow_icons = shadow.querySelector('.arrow')
+    if (arrow_icons) {
+      arrow_icons.innerHTML = dricons[0]
+    }
+  }
+
+  const closeBtn = container.querySelector('.close-btn')
+  closeBtn.addEventListener('click', () => {
+      if (onClose) onClose()
+    })}
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'arrow-down.svg': { '$ref': 'arrow-down.svg' },
+        },
+        'style/': {
+          'style.css': { '$ref': 'btc_nodes.css' },
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          },
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_nodes/btc_nodes.js")
+},{"STATE":57}],6:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const state_db = STATE(__filename)
+const { sdb, get } = state_db(fallback_module)
+
+module.exports = btc_req_msg
+
+async function btc_req_msg(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject_style,
+    data: render_data,
+    icons: inject_icons,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+  shadow.innerHTML = `
+    <div class="btc_req_wrapper"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const wrapper = shadow.querySelector('.btc_req_wrapper')
+  let dricons = []
+
+  await sdb.watch(on_batch)
+  return el
+
+  function throw_error(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function on_batch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const fn = on[type] || throw_error
+      await fn(data, type)
+    }
+  }
+
+  function inject_style(data) {
+    style.textContent = data[0]
+  }
+
+  function inject_icons(data) {
+    dricons = data
+  }
+
+  function render_data(data) {
+    const { avatar, name, amount, date, status, is_me } = data[0]
+
+    const now = new Date()
+    const expire_date = new Date(date)    
+    let final_status = status
+
+    // auto-change to expired if time has passed
+    if (expire_date < now) {
+      final_status = 'expired'
+    }
+
+    let border_color = '#DDB473'
+    let btn_color = '#F7931A'
+    let bg_color = '#FFFCE7'
+    let status_element = ''
+
+    if (final_status === 'send') {
+      status_element = `<button class="status_btn" style="background:${btn_color};">Send</button>`
+    } else if (final_status === 'paid') {
+      border_color = '#87DD73'
+      bg_color = '#ECFFE7'
+      btn_color = '#4CAF50'
+      status_element = `<button class="status_btn" style="background:${btn_color};">Paid √</button>`
+    } else if (final_status === 'expired') {
+      border_color = '#C83535'
+      bg_color = '#FFE7E7'
+      btn_color = '#C83535'
+      status_element = `<button class="status_btn" style="background:${btn_color};">Expired</button>`
+    }
+
+    wrapper.innerHTML = `
+      <div class="btc_row ${is_me ? 'self' : ''}">
+        ${!is_me ? `<img class="avatar_outside" src="${avatar}" />` : ''}
+        <div class="btc_box" style="border:2px solid ${border_color}; background:${bg_color}">
+          <div class="btc_top">
+            <span>
+              <span class="name_text">${name}</span>
+              <span class="req_text"> requests </span>
+              <span class="amount_text">BTC ${amount}</span>
+              <span class="btc_icon">${dricons[0] || '₿'}</span>
+            </span>
+          </div>
+          <div class="btc_bottom">
+            <span class="btc_expire">Expire at ${date}</span>
+            ${status_element}
+          </div>
+        </div>
+      </div>
+    `
+  }
+}
+
+function fallback_module() {
+  return {
+    api: fallback_instance,
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': {
+            '$ref': 'btc.svg' 
+          }
+        },
+        'style/': {
+          'btc_req_msg.css': {
+            '$ref': 'btc_req_msg.css'
+          }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {}}
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_req_msg/btc_req_msg.js")
+},{"STATE":57}],7:[function(require,module,exports){
+let cached_rate = null
+
+async function btc_usd_rate(from = 'btc', to = 'usd') {
+  if (cached_rate) return cached_rate
+
+  const rate = Number(await (await fetch(`https://api.price2sheet.com/raw/${from}/${to}`)).text())
+
+  if (!isNaN(rate) && rate > 0) {
+    cached_rate = rate
+  } else {
+    console.log("BTC USD RATE api is returning null value")
+  }
+
+  return cached_rate
+}
+
+module.exports = btc_usd_rate
+},{}],8:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = button
+
+async function button (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+
+
+  shadow.innerHTML = `
+    <button class="btn"></button>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const btn_text = shadow.querySelector('.btn')
+
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+    const {label} = data[0]
+    
+    btn_text.innerHTML = `
+      <div>${label}</div>
+    `
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+        'style/': {
+          'style.css': {
+            '$ref': 'button.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/button/button.js")
+},{"STATE":57}],9:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = chat_filter
+
+async function chat_filter(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = [] // arrow, orange, green, red icons
+
+  shadow.innerHTML = `
+    <div class="cf-wrap">
+      <div class="cf-item main-head" data-key="me">
+        <span class="arrow-slot"></span>
+        <span>Request by me</span>
+      </div>
+
+      <div class="section-me hidden">
+        <div class="cf-item sub-head" data-key="me-btc">
+          <span class="arrow-slot"></span>
+          <span>Bitcoin</span>
+        </div>
+        <div class="sub-me-btc hidden cf-status"></div>
+
+        <div class="cf-item sub-head" data-key="me-ln">
+          <span class="arrow-slot"></span>
+          <span>Lightning</span>
+        </div>
+        <div class="sub-me-ln hidden cf-status"></div>
+      </div>
+
+      <div class="cf-item main-head" data-key="luis">
+        <span class="arrow-slot"></span>
+        <span>Request by luis</span>
+      </div>
+
+      <div class="section-luis hidden">
+        <div class="cf-item sub-head" data-key="luis-btc">
+          <span class="arrow-slot"></span>
+          <span>Bitcoin</span>
+        </div>
+        <div class="sub-luis-btc hidden cf-status"></div>
+
+        <div class="cf-item sub-head" data-key="luis-ln">
+          <span class="arrow-slot"></span>
+          <span>Lightning</span>
+        </div>
+        <div class="sub-luis-ln hidden cf-status"></div>
+      </div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+
+  const sections = {
+    me: shadow.querySelector('.section-me'),
+    'me-btc': shadow.querySelector('.sub-me-btc'),
+    'me-ln': shadow.querySelector('.sub-me-ln'),
+    luis: shadow.querySelector('.section-luis'),
+    'luis-btc': shadow.querySelector('.sub-luis-btc'),
+    'luis-ln': shadow.querySelector('.sub-luis-ln')
+  }
+
+  const subs = await sdb.watch(onbatch)
+
+  // click listeners
+  shadow.querySelectorAll('.cf-item').forEach(item => {
+    item.onclick = () => toggleSection(item.dataset.key)
+  })
+
+  function toggleSection(key) {
+    const box = sections[key]
+    if (!box) return
+
+    box.classList.toggle('hidden')
+
+    const arrowSlot = shadow.querySelector(`.cf-item[data-key="${key}"] .arrow-slot`)
+    if (arrowSlot && dricons.length > 0) {
+      arrowSlot.innerHTML = box.classList.contains('hidden') ? dricons[0] : dricons[0].replace('rotate(0)', 'rotate(90deg)')
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+
+    // insert icons into arrow slots
+    shadow.querySelectorAll('.arrow-slot').forEach(slot => {
+      slot.innerHTML = dricons[0] // arrow icon
+    })
+
+    // fill status sections
+    fillStatuses('sub-me-btc', false)
+    fillStatuses('sub-me-ln', true)
+    fillStatuses('sub-luis-btc', false)
+    fillStatuses('sub-luis-ln', true)
+  }
+
+  function fillStatuses(key, includeExpired) {
+    const box = shadow.querySelector(`.${key}`)
+    if (!box) return
+
+    box.innerHTML = `
+      <div><span class="dot">${dricons[1]}</span><span>Pending</span></div>
+      <div><span class="dot">${dricons[2]}</span><span>Paid</span></div>
+      ${includeExpired ? `<div><span class="dot">${dricons[3]}</span><span>Expired</span></div>` : ''}
+    `
+  }
+
+  async function ondata(data) {}
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+       'icons/': {
+          'arrow_down.svg': { '$ref': 'arrow_down.svg' },
+          'orange_dot.svg': { '$ref': 'orange_dot.svg' },
+          'green_dot.svg': { '$ref': 'green_dot.svg' },
+          'red_dot.svg': { '$ref': 'red_dot.svg' },
+        },
+        'style/': {
+          'chat_filter.css': { '$ref': 'chat_filter.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/chat_filter/chat_filter.js")
+},{"STATE":57}],10:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const button = require('button')
+const btc_req_msg = require('btc_req_msg')
+const switch_request = require('switch_request')
+const switch_send = require('switch_send')
+const chat_filter = require('chat_filter')
+
+module.exports = chat_view
+
+async function chat_view(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="chat-view-container">
+      <div class="chat-view">
+        <div class="chat-view-header"></div>
+        <div class="chat_filter_panel"></div>
+        <div class="chat-messages"></div>
+      </div>
+      <div class="buttons">
+        <div class="request">       
+          <div class="popup-box-request"></div>
+          <div class="request-button"></div>
+        </div>
+        <div class="send">       
+          <div class="popup-box-send"></div>
+          <div class="send-button"></div>
+        </div>
+      </div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+
+  const chat_view_container = shadow.querySelector('.chat-view-container')
+  const header_component = shadow.querySelector('.chat-view-header')
+  const send_button_component = shadow.querySelector('.send-button')
+  const request_button_component = shadow.querySelector('.request-button')
+  const messages_component = shadow.querySelector('.chat-messages')
+  const buttons_container = shadow.querySelector('.buttons')
+  const filter_panel = shadow.querySelector('.chat_filter_panel')
+  const popup_box_request = shadow.querySelector('.popup-box-request')
+  const popup_box_send = shadow.querySelector('.popup-box-send')
+  
+  const subs = await sdb.watch(onbatch)
+
+  const chat_filter_component = await chat_filter(subs[0])
+  const send_button = await button(subs[1])
+  const request_button = await button(subs[2])
+  const switch_request_component = await switch_request(subs[3])
+  const switch_send_component = await switch_send(subs[4])
+  const btc_req_msg1_component = await btc_req_msg(subs[5])
+  const btc_req_msg2_component = await btc_req_msg(subs[6])
+  const btc_req_msg3_component = await btc_req_msg(subs[7])
+
+  send_button_component.replaceWith(send_button)
+  request_button_component.replaceWith(request_button)
+  messages_component.appendChild(btc_req_msg1_component)
+  messages_component.appendChild(btc_req_msg2_component)
+  messages_component.appendChild(btc_req_msg3_component)
+  filter_panel.appendChild(chat_filter_component)
+  filter_panel.style.display = "none"
+
+
+  popup_box_send.appendChild(switch_send_component)
+  popup_box_request.appendChild(switch_request_component)
+
+
+  let openPopup = null
+
+  function togglePopup(target) {
+    if (openPopup === target) {
+      target.style.display = 'none'
+      openPopup = null
+      return
+    }
+
+    if (openPopup) openPopup.style.display = 'none'
+
+    target.style.display = 'block'
+    openPopup = target
+  }
+
+  send_button.addEventListener('click', () => togglePopup(popup_box_send))
+  request_button.addEventListener('click', () => togglePopup(popup_box_request))
+
+  shadow.addEventListener('click', (e) => {
+    if (!popup_box_send.contains(e.target) &&
+        !popup_box_request.contains(e.target) &&
+        e.target !== send_button &&
+        e.target !== request_button) 
+    {
+      if (openPopup) openPopup.style.display = 'none'
+      openPopup = null
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(f => f.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { avatar, name, code } = data[0] || {}
+    
+    header_component.innerHTML = `
+      <div class="container-view-header">
+        <div class="container-left">
+          <div class="left-icon">
+            ${dricons[0] || ''}
+          </div>
+
+          <div class="contact-heading">
+            <div class="contact-avatar">
+              <img src="${avatar}" alt="avatar" />
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">${name}</div>
+              <div class="contact-code">${code}</div>
+            </div>
+          </div>
+        </div>
+        <div class="right-icon">
+          ${dricons[1] || ''}
+        </div>
+      </div>
+    `
+
+    const right_icon = header_component.querySelector('.right-icon')
+    right_icon.addEventListener('click', () => {
+      const visible = filter_panel.style.display === "block"
+      filter_panel.style.display = visible ? "none" : "block"
+    })
+
+    const left_icon = header_component.querySelector('.left-icon')
+    
+    // hide overlay on close
+    left_icon.addEventListener('click', () => {
+      if (onClose) onClose()
+    })
+  }
+
+  function iconject (data) {
+    dricons = data
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'chat_filter': { $: '' },
+      'button': { $: '' },
+      'btc_req_msg': { $: '' },
+      'switch_request': { $: '' },
+      'switch_send': { $: '' }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const chat_filter = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: {}
+    }
+
+    const button = {
+      mapping: { style: 'style', data: 'data' },
+      1: { label: 'Send' },
+      2: { label: 'Request' }
+    }
+
+    const switch_request = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      3: opts.value
+    }
+
+    const switch_send = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      4: opts.value
+    }
+
+    // BTC messages with separate statuses
+    const btc_req_msg = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      5: { ...opts.value, 
+        date: "25 Dec 2026",
+        avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+        name: 'David Clark',
+        amount: 0.0054,
+        status: "send", 
+        is_me: false
+      },
+      6: { ...opts.value,    
+        date: "25 Sep 2025",
+        avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+        name: 'David Clark',
+        amount: 0.0052,
+        status: "paid", 
+        is_me: false},
+      7: { ...opts.value, 
+        date: "25 Dec 2027",
+        avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+        name: 'David Clark',
+        amount: 0.0054,
+        status: "paid", 
+        is_me: false
+       }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'left-arrow.svg': {
+            '$ref': 'left-arrow.svg'
+          },
+          'three-dot.svg':{
+            '$ref': 'three-dot.svg'
+          }
+        },
+        'style/': {
+          'chat_view.css': { '$ref': 'chat_view.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts.value || {} }
+        }
+      },
+      _: {
+        chat_filter,
+        button,
+        switch_request,
+        switch_send,
+        btc_req_msg
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/chat_view/chat_view.js")
+},{"STATE":57,"btc_req_msg":6,"button":8,"chat_filter":9,"switch_request":46,"switch_send":47}],11:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const chat_view = require('chat_view')
+
+module.exports = contact_row
+
+async function contact_row(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata, icons: iconject }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="contact-row"></div>
+
+    <div class="chat-overlay hidden">
+      <div class="chat-body"></div>
+    </div>
+
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.contact-row')
+  const overlay = shadow.querySelector('.chat-overlay')
+  const chat_body = shadow.querySelector('.chat-body')
+
+  let dricons = []
+  let chatMounted = false
+
+  const sendToParent = msg => protocol?.(msg)
+
+  const subs = await sdb.watch(onbatch)
+
+  // click → open chat
+  row.addEventListener('click', async () => {
+    overlay.classList.remove('hidden')
+
+    if (!chatMounted) {
+      const chat_view_comp = await chat_view(subs[0], {
+        onClose: () => overlay.classList.add('hidden')
+      })
+      chat_body.append(chat_view_comp)
+      chatMounted = true
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(f => f.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { avatar, name, message, time, unread, online, lightining } = data[0] || {}
+    console.log('contact row data', data[0])
+    row.innerHTML = `
+      <div class="contact-left">
+        <div class="contact-avatar">
+          <img src="${avatar || ''}" />
+          ${online ? '<div class="online-dot"></div>' : ''}
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">${name || ''}</div>
+          <div class="contact-message ${unread > 0 ? 'unread-message' : ''}">
+            ${message || ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-right">
+        <div class="contact-time">${time || ''}</div>
+        <div class="icon-wrapper ${!lightining ? 'no-lightning' : ''}">
+          ${lightining && dricons[0] ? dricons[0] : ''}
+          ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+        </div>
+      </div>
+    `
+
+    sendToParent({ type: 'contact-name', name: name || '' })
+  }
+
+  function iconject(data) {
+    dricons = data
+  }
+}
+
+function fallback_module () {
+return {
+  api: fallback_instance,
+  _:{
+    chat_view: { $: ''},
+  }
+}
+function fallback_instance (opts) {
+  if (!opts) opts = {}
+  if (!opts.value) opts.value = {}
+
+  const chat_view = {
+    mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: opts.value,
+  }
+  return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+        },
+        'style/':{
+          'style.css':{
+            '$ref': 'contact_row.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        chat_view
+      }
+  }
+}
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/contact_row/contact_row.js")
+},{"STATE":57,"chat_view":10}],12:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const search_bar = require('search_bar') 
+const square_button = require('square_button') 
+const add_contact_popup = require('add_contact_popup')
+const contact_row = require('contact_row')
+
+module.exports = contacts_list
+
+async function contacts_list(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+
+  shadow.innerHTML = `
+    <div class="contact-list-container">
+      <div class="contact-list-header">Contacts</div>
+
+      <div class="top-bar">
+        <div class="search-bar"></div>
+        <div class="square-button" id="square-button"></div>
+        <div class="add-contact-popup hidden"></div>
+      </div>
+
+      <div class="contacts-wrapper"></div>
+    </div>
+    <style></style>
+  `
+
+  //Query Selector
+  const style = shadow.querySelector('style')
+  const contact_list_container = shadow.querySelector('.contact-list-container')
+  const top_bar = shadow.querySelector('.top-bar')
+  const search_bar_el = shadow.querySelector('.search-bar')
+  const square_button_el = shadow.querySelector('.square-button')
+  const square_button_id = shadow.querySelector('#square-button')
+  const add_contact_el = shadow.querySelector('.add-contact-popup')
+
+  // popup mounting
+  let add_contact_mounted = false 
+
+  // subs 
+  const subs = await sdb.watch(onbatch)
+
+  const contactElements = []
+
+  // search bar component 
+    const search = await search_bar(subs[0], msg => {
+      if (msg.type === 'search') {
+        const value = msg.value.toLowerCase()
+
+        contactElements.forEach(({ el, name }) => {
+          const isVisible = name.toLowerCase().includes(value)
+          el.style.display = isVisible ? '' : 'none'
+        })
+      }
+    })
+  search_bar_el.replaceWith(search)
+
+  // square button component 
+    const button = await square_button(subs[1])
+  square_button_el.append(button)
+
+  // add contact popup component
+  square_button_id.addEventListener('click', async () =>  {
+    const is_visible = !add_contact_el.classList.contains('hidden')
+
+    if (is_visible){
+      add_contact_el.classList.add('hidden')
+    }
+    else {
+      add_contact_el.classList.remove('hidden')
+
+      if (!add_contact_mounted){
+          const add_contact_popup_comp = await add_contact_popup(subs[2], {
+            onClose: () => {
+              add_contact_el.classList.add('hidden')
+            }
+          })
+          add_contact_el.append(add_contact_popup_comp)
+          add_contact_mounted = true
+      }
+    }
+    
+  })
+
+ 
+    
+  for (let i = 3; i < subs.length; i++) {
+    const contactData = subs[i]
+    
+    // Create contact element first
+    const contactEl = await contact_row(contactData, msg => {
+      if (msg.type === 'contact-name') {
+        console.log('[ContactList] contact name received:', msg.name)
+      }
+    })
+
+    // Append to container
+    contact_list_container.append(contactEl)
+    console.log('[ContactRow appended] contactEl:', contactEl)
+  }
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const fn = on[type] || fail
+      await fn(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+
+  async function ondata(data) {
+
+  }
+
+}
+
+function fallback_module() {
+
+  return {
+    api,
+    _: {
+      'search_bar': { $: '' },
+      'square_button': { $: '' },
+      'add_contact_popup': { $: '' },
+      'contact_row': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const search_bar = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 0: {} }
+    const square_button = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 1: {} }
+    const add_contact_popup = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 2: {} }
+    const contact_row = { mapping: { style: 'style', data: 'data', icons: 'icons' } }
+
+    opts.value.forEach((contact, index) => {
+      contact_row[index + 3] = contact
+    })
+
+    return {
+      drive: {
+        'style/': { 'style.css': { '$ref': 'contacts_list.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { search_bar, square_button, add_contact_popup, contact_row }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/contacts_list/contacts_list.js")
+},{"STATE":57,"add_contact_popup":2,"contact_row":11,"search_bar":39,"square_button":44}],13:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const create_button = require('button')
+const btc_input_card = require('btc_input_card')
+const input_field = require('input_field')
+const templates = require('templates')
+const create_invoice_confirmation = require('create_invoice_confirmation')  
+
+module.exports = create_invoice
+
+async function create_invoice(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="create-invoice-container">
+      <div class="create-invoice-header">  
+        <div class="title-container"> 
+          <div class="create-invoice-header">Create Lightning Invoice</div>
+          <div class="btc-icon"></div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="scroll-area">
+        <div class="btc-input-card"></div>
+        <div class="extra-input1"></div>
+        <div class="extra-input2"></div>
+        <div class="divider"></div>
+        <div class="templates-heading">Use Templates</div>
+        <div class="template1"></div>
+        <div class="template2"></div>
+        <div class="template3"></div>
+      </div>
+      <div class="create_button"></div>
+    </div>
+    <div class="confirmation-container hidden"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const create_button_component = shadow.querySelector('.create_button')
+  const btc_input_card_component = shadow.querySelector('.btc-input-card')
+  const input1_component = shadow.querySelector('.extra-input1')
+  const input2_component = shadow.querySelector('.extra-input2')
+  const template1_container = shadow.querySelector('.template1')
+  const template2_container = shadow.querySelector('.template2')
+  const template3_container = shadow.querySelector('.template3')
+  const confirmation_container = shadow.querySelector('.confirmation-container')
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await create_button(subs[0])
+  const btc_component = await btc_input_card(subs[1])
+  const input1 = await input_field(subs[2])
+  const input2 = await input_field(subs[3])
+  const templates_component1 = await templates(subs[4])
+  const templates_component2 = await templates(subs[5])
+  const templates_component3 = await templates(subs[6])
+
+
+  create_button_component.append(button_component)
+  btc_input_card_component.append(btc_component)
+  input1_component.append(input1)
+  input2_component.append(input2)
+  template1_container.append(templates_component1)
+  template2_container.append(templates_component2)
+  template3_container.append(templates_component3)
+
+  let invoice_mounted = false 
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  button_component.addEventListener('click', async () => {
+    confirmation_container.classList.remove('hidden')
+
+      if (!invoice_mounted) {
+      const invoice = await create_invoice_confirmation(subs[7], {
+        onClose: () => confirmation_container.classList.add('hidden')
+      })
+      confirmation_container.append(invoice)
+      invoice_mounted = true
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const btc_icon = shadow.querySelector('.btc-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+
+    btc_icon.innerHTML = dricons[0]
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'btc_input_card': { $: '' },
+      'input_field': { $: '' },
+      'templates': { $: '' },
+      'create_invoice_confirmation': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Create Invoice'
+      }    
+    }
+    
+    const btc_input_card = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      1: {
+        balance: 0.0024, 
+      }  
+    } 
+
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+        placeholder: 'Enter invoice title',
+      },
+      3:{
+        placeholder: 'Enter invoice note'
+      }
+
+    }
+
+    const templates = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      4: {
+        date:"2025-05-10",
+        btc: 0.012,
+        usd: 200
+      },
+      5: {
+        date:"2024-12-25",
+        btc: 0.005,
+        usd: 80
+      },
+      6: {
+        date:"2024-01-01",
+        btc: 0.01,
+        usd: 150
+      }
+    }
+
+    const create_invoice_confirmation = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+       7: {
+        value: [
+            { label: "Label", value: "Work Payment" },
+            { label: "Note", value: "This is the month of may invoice and i also updated everything too" },
+            { label: "Amount", value: "0.0020 BTC",  icon: "lightning.svg", convert: true }
+          ]
+      },
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'create_invoice.css': {
+            '$ref': 'create_invoice.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        btc_input_card,
+        input_field,
+        templates,
+        create_invoice_confirmation    
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/create_invoice/create_invoice.js")
+},{"STATE":57,"btc_input_card":4,"button":8,"create_invoice_confirmation":14,"input_field":21,"templates":48}],14:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const receipt_row = require('receipt_row')
+const send_button = require('button') 
+const send_invoice_modal = require('send_invoice_modal')
+
+module.exports = create_invoice_confirmation
+
+async function create_invoice_confirmation(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata, icons: iconject }
+
+  let dricons = []
+  let modalMounted = false
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="invoice-card">
+      <div class="invoice-header">
+        <div class="title-container">
+          <div class="invoice-title">Create Lightning Invoice</div>
+          <div class="light-icon-small"></div>
+        </div>
+        <div class="close-icon"></div>
+      </div>
+      <div class="receipt-rows"></div>
+      <div class="send-button"></div>
+      <div class="send-modal-container hidden"></div>
+      <style></style>
+    </div>
+  `
+
+  const style = shadow.querySelector('style')
+  const rows_el = shadow.querySelector('.receipt-rows')
+  const send_button_container = shadow.querySelector('.send-button')
+  const close_icon = shadow.querySelector('.close-icon')
+  const modal_container = shadow.querySelector('.send-modal-container')
+
+  // Close the invoice card
+  close_icon.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  const subs = await sdb.watch(onbatch)
+
+  // Render send button (subs[0])
+  const button_component = await send_button(subs[0])
+  send_button_container.append(button_component)
+
+  // Render send_invoice_modal only when button is clicked (subs[1])
+  button_component.addEventListener('click', async () => {
+    modal_container.classList.remove('hidden')
+    if (!modalMounted) {
+      const modal_component = await send_invoice_modal(subs[1], {
+        onClose: () => modal_container.classList.add('hidden')
+      })
+      modal_container.append(modal_component)
+      modalMounted = true
+    }
+  })
+
+  // Render receipt rows (subs[2+] if any)
+  for (let i = 2; i < subs.length; i++) {
+    const row_component = await receipt_row(subs[i])
+    rows_el.append(row_component)
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const fn = on[type] || fail
+      await fn(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const light_icon = shadow.querySelectorAll('.light-icon-small')
+    const close_icon = shadow.querySelector('.close-icon')
+    light_icon.forEach(el => el.innerHTML = dricons[0])
+    close_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {}
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'send_invoice_modal': { $: '' },
+      'receipt_row': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    const button = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 0: { label: 'Send' } }
+    const send_invoice_modal = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 1: {
+       value: [
+            {
+              avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3",
+              name: 'Mark Kevin',
+              message: 'Payment Received successfully',
+              time: '3 hr',
+              unread: 5,
+              online: true,
+              lightining: true
+            },
+            {
+              avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+              name: 'David Clark',
+              message: 'You have a new message from Mark',
+              time: '1 hr',
+              unread: 5,
+              online: false,
+              lightining: false
+            },
+            {
+              avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+              name: 'David Clark',
+              message: 'Received funds',
+              time: '1 hr',
+              unread: 0,
+              online: true,
+              lightining: true
+            },
+            {
+              avatar: "https://tse4.mm.bing.net/th/id/OIP.7XLV6q-D_hA-GQh_eJu52AHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
+              name: 'Sara Ahmed',
+              message: 'Invoice sent',
+              time: '2 hr',
+              unread: 0,
+              online: false,
+              lightining: false
+            }
+          ] 
+        }
+      }
+
+    const receipt_row = { mapping: { style: 'style', data: 'data', icons: 'icons' } }
+
+    opts.value.slice(1).forEach((row, i) => {
+      receipt_row[i + 2] = row
+    })
+
+    return {
+      drive: {
+        'icons/': { 'lightning.svg': { '$ref': 'lightning.svg' }, 'x.svg': { '$ref': 'x.svg' } },
+        'style/': { 'create_invoice_confirmation.css': { '$ref': 'create_invoice_confirmation.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { button, send_invoice_modal, receipt_row}
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/create_invoice_confirmation/create_invoice_confirmation.js")
+},{"STATE":57,"button":8,"receipt_row":34,"send_invoice_modal":41}],15:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const address_input = require('input_field')
+const button = require('button')
+
+module.exports = details_menu
+
+async function details_menu(opts = {}) {
+  const { sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="details-menu-container">
+      <div class="details-menu-header">Details Menu</div>
+      <div class="container-title">
+        <div class="title">Address</div>
+        <div class="close-icon"></div>
+      </div>
+      <div class="address-input"></div>
+      <div class="secret-section">
+        <div class="secret-title">Secret Recovery Phrase</div>
+        <div class="secret-text-block" contenteditable="true"></div>
+      </div>
+      <div class="reveal-btn"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const address_input_component = shadow.querySelector('.address-input')
+  const reveal_btn_component = shadow.querySelector('.reveal-btn')
+  const closeBtn = shadow.querySelector('.close-icon')
+
+  const subs = await sdb.watch(onbatch)
+  const address_component = await address_input(subs[0])
+  const button_component = await button(subs[1])
+
+  address_input_component.append(address_component)
+  reveal_btn_component.append(button_component)
+
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const parent = el.parentNode
+      if (parent) {
+        parent.classList.add('hidden')
+      }
+    }
+  }
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const closeIcon = shadow.querySelector('.close-icon')
+    if (closeIcon) closeIcon.innerHTML = dricons[0]
+  }
+
+  async function ondata(data) {
+  }
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'input_field': { $: '' },
+      'button': { $: '' }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      0: {
+        placeholder: '1BoatSLRHtKNngkdXEeobR76b53LETtpyT',
+        address: '1BoatSLRHtKNngkdXEeobR76b53LETtpyT',
+        icon: 'apple'
+      }
+    }
+
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      },
+      1: {
+        label: 'Reveal'
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+        },
+        'style/': {
+          'details_menu.css': {'$ref': 'details_menu.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts  || {} }
+        }
+      },
+      _: { input_field, button }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/details_menu/details_menu.js")
+},{"STATE":57,"button":8,"input_field":21}],16:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const invoice_input = require('input_field')
+
+module.exports = gen_invite_code
+
+async function gen_invite_code(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="pay-invoice-container">
+      <div class="pay-invoice-header">  
+        <div class="title-container"> 
+          <div class="header-title">Generate Invite Code</div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="invoice-input"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const invoice_input_component = shadow.querySelector('.invoice-input')
+
+  const subs = await sdb.watch(onbatch)
+
+  const invoice_component = await invoice_input(subs[0])
+
+  invoice_input_component.append(invoice_component)
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      if (onClose) onClose()
+    }
+  }
+
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const x_icon = shadow.querySelector('.x-icon')
+
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {}
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'input_field': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      0: {
+        header: 'Your Invite Code',
+        placeholder: 'Paste your code here',
+        address: 'lnbc1u1p0exampleinvoicehere1234567890',
+        icon: 'apple'  // demo value
+      }    
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'gen_invite_code.css': {
+            '$ref': 'gen_invite_code.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        input_field
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/gen_invite_code/gen_invite_code.js")
+},{"STATE":57,"input_field":21}],17:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = general_button
+
+async function general_button (opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+
+  const {drive} = sdb
+
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const el = document.createElement('div')
+  const shadow =  el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="general-button-container">
+      <button class="general-button" type="button">
+        <span class="button-text">Button</span>
+      </button>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const button = shadow.querySelector('.general-button')
+
+  let send_action = null
+  if(protocol){
+   send_action = protocol(msg=>on_message(msg))
+  }
+
+  // Set up click handler
+  button.addEventListener('click', handleClick)
+
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch){
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.replaceChildren((() => {
+      return document.createElement('style').textContent = data[0]
+    })())
+  }
+
+  function ondata(data) {
+    const buttonData = data[0]?.value || {}
+    const { name, action } = buttonData
+    updateButton(buttonData)
+  }
+
+  function on_message({type, data}) {
+    if (type === 'button_name') {
+      
+      updateButton({
+        name: data.name,
+        action: data.action
+      })
+    }
+  }
+
+
+  function updateButton({ name = 'Button', disabled = false, action = null }) {
+  const buttonTextEl = shadow.querySelector('.button-text')
+  
+  
+  if (buttonTextEl) {
+    buttonTextEl.textContent = name
+  }
+
+  if (button) {
+    button.disabled = disabled
+    button._action = action // Store action for use when clicked
+  }
+}
+
+
+  function handleClick(event) {
+    event.preventDefault()
+
+    if(send_action && button._action){
+      send_action({
+        type: button._action,
+        data: {
+          text: shadow.querySelector('.button-text').textContent
+        }
+      })
+    }
+  }
+}
+
+// ============ Fallback Setup for STATE ============
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'style/': {
+          'general_button.css': {
+           '$ref':'general_button.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/general_button/general_button.js")
+},{"STATE":57}],18:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const home_page_header = require('home_page_header')
+const action_buttons = require('action_buttons')
+const transaction_list = require('transaction_list')
+const total_wealth = require('total_wealth')
+const lightning_buttons = require('lightning_buttons')
+const wallet_button = require('wallet_button')
+const light_page_header = require('light_page_header')
+const light_tx_list = require('light_tx_list')
+
+module.exports = home_contents
+
+async function home_contents(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  el.id = "home_contents"
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="home-contents-container"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.home-contents-container')
+
+  const subs = await sdb.watch(onbatch)
+
+  // -------------------- Create components --------------------
+  // Pass opts with wallet info for initial BTC view
+  const headerOpts = { wallet: 'btc', amount: '0.9616' }
+  const home_page_header_component = await home_page_header(subs[0], headerOpts)
+  const action_buttons_component = await action_buttons(subs[1], home_protocol)
+  const transaction_list_component = await transaction_list(subs[2])
+  const total_wealth_component = await total_wealth(subs[3])
+  const lightning_buttons_component = await lightning_buttons(subs[4], home_protocol)
+  const wallet_button_component = await wallet_button(subs[5], home_protocol)
+  const light_page_header_component = await light_page_header(subs[6])
+  const light_tx_list_component = await light_tx_list(subs[7])
+
+  // default view: BTC wallet components
+  container.append(
+    home_page_header_component,
+    wallet_button_component,
+    action_buttons_component,
+    transaction_list_component,
+    total_wealth_component
+  )
+
+  return el
+
+  // -------------------- Protocol to handle child messages --------------------
+  function home_protocol(sendToChild) {
+    return async function (messageFromChild) {
+      if (messageFromChild?.from === 'switch_account' && messageFromChild.type === 'switch') {
+        const wallet = messageFromChild.data
+
+        if (wallet === 'btc') {
+          // Update header dynamically
+          home_page_header_component._update?.({ wallet: 'btc', amount: '0.9616' })
+
+          // Re-append BTC view components
+          container.innerHTML = ''
+          container.append(
+            home_page_header_component,
+            wallet_button_component,
+            action_buttons_component,
+            transaction_list_component,
+            total_wealth_component
+          )
+
+        } else if (wallet === 'lightning') {
+          // Update header dynamically
+          home_page_header_component._update?.({ wallet: 'lightning', amount: '0.0246' })
+
+          // Show Lightning buttons instead of BTC action buttons
+          container.innerHTML = ''
+          container.append(
+            light_page_header_component,
+            wallet_button_component,
+            lightning_buttons_component,
+            light_tx_list_component,
+            total_wealth_component
+          )
+
+        }
+      }
+    }
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) { style.textContent = data[0] }
+  function ondata(data) {}
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+}
+
+// ------------------ Fallback for STATE ------------------
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'home_page_header': { $: '' },
+      'action_buttons': { $: '' },
+      'transaction_list': { $: '' },
+      'total_wealth': { $: '' },
+      'lightning_buttons': { $: '' },
+      'wallet_button': { $: '' },
+      'light_page_header': { $: '' },
+      'light_tx_list': { $: '' }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const home_page_header = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: { wallet: 'btc', amount: '0.9616' }
+    }
+    const action_buttons = { mapping: { style: 'style', data: 'data' }, 0: { buttons: { wallet: 'btc' } } }
+    const transaction_list = {
+      mapping: { style: 'style', data: 'data' },
+      0: { value: [
+        { tid: 'Luis fedrick', ttime: '11:30 AM', tamount: '+0.02456', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
+        { tid: 'skdmf932ksdmf0234lsd', ttime: '02:15 PM', tamount: '+0.03271', avatar: '' },
+        { tid: 'Mark Kevin', ttime: '03:45 PM', tamount: '-0.00421', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+      ]}
+    }
+    const total_wealth = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: { value: { total: 0.9862, usd: 1000, lightning: 0.02456, bitcoin: 0.96164 } }
+    }
+    const lightning_buttons = { mapping: { style: 'style', data: 'data' }, 0: { buttons: { wallet: 'lightning' } } }
+    const wallet_button = { mapping: { style: 'style', data: 'data' }, 0: { buttons: { wallet: 'btc' } } }
+    const light_page_header = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: { wallet: 'lightning', amount: '0.0246' }
+    }
+    const light_tx_list = {
+      mapping: { style: 'style', data: 'data' },
+      0: { value: [
+        { tid: 'skdmf932ksdmf0234lsd', ttime: '09:15 AM', tamount: '-0.00123', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        { tid: 'skdmf932hiuo1h2oihio', ttime: '04:20 PM', tamount: '-0.00234', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+      ]}
+    }
+
+    return {
+      drive: { 
+        'style/': { 
+          'home_contents.css': { 
+            '$ref': 'home_contents.css' } 
+        }, 
+        'data/': { 
+          'opts.json': { 
+            raw: opts || {} 
+          } 
+        } 
+      },
+      _: { 
+        home_page_header, 
+        action_buttons, 
+        transaction_list, 
+        total_wealth, 
+        lightning_buttons, 
+        wallet_button, 
+        light_page_header, 
+        light_tx_list 
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_contents/home_contents.js")
+},{"STATE":57,"action_buttons":1,"home_page_header":20,"light_page_header":22,"light_tx_list":24,"lightning_buttons":27,"total_wealth":49,"transaction_list":51,"wallet_button":56}],19:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const menu = require('menu')
+
+module.exports = home_page
+
+async function home_page(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="home-page-container"></div>
+    <style></style>
+  `
+  const container = shadow.querySelector('.home-page-container')
+  const style = shadow.querySelector('style')
+
+  const subs = await sdb.watch(onbatch)
+  const menu_component = await menu(subs[0])
+  container.appendChild(menu_component)
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) { style.textContent = data[0] }
+  function ondata(data) {}
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: { menu: { $: '' } }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const menu = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: ''
+    }
+
+    return {
+      drive: {
+        'style/': {
+          'home_page.css': { '$ref': 'home_page.css' }
+        },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { menu }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_page/home_page.js")
+},{"STATE":57,"menu":28}],20:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = home_page_header
+
+async function home_page_header (opts = {}) {
+    const { id, sdb } = await get(opts.sid)
+    const { drive } = sdb
+
+    const on = {
+        style: inject,
+        data: ondata,
+        icons: iconject,
+    }
+
+    const el = document.createElement('div')
+    const shadow = el.attachShadow({ mode: 'closed' })
+
+    let dricons = []
+
+    shadow.innerHTML = `
+        <div class="header-container">
+   
+        </div>
+        <style></style>
+    `
+
+    const style = shadow.querySelector('style')
+    const container = shadow.querySelector('.header-container')
+
+    await sdb.watch(onbatch)
+    return el
+
+    async function onbatch (batch) {
+        for (const { type, paths } of batch) {
+        const data = await Promise.all(
+            paths.map(path => drive.get(path).then(file => file.raw))
+        )
+        const func = on[type] || fail
+        await func(data, type)
+        }
+    }
+
+    function inject (data) {
+        style.textContent = data[0]
+    }
+
+    async function ondata (data) {
+      const { wallet, amount } = data[0]
+  
+      let heading = ""
+      let icon = ""
+      let display_amount = amount > 0 ? amount : "0.00"
+
+      if (wallet == "btc"){
+        heading = "Bitcoin Wallet"
+        icon = dricons[0]
+      } else if (wallet == "lightning"){
+        heading = "Lightning Wallet"
+        icon = dricons[1]
+      } else{
+        console.log("Wrong wallet")
+      }
+
+      container.innerHTML = `
+          <div class="heading">${heading}</div>
+          <div class="wallet-row">
+            <div class="icon-slot">${icon}</div>
+            <div class="wallet-amount">${display_amount}</div>
+          </div>
+      ` 
+    }
+
+
+    function fail (data, type) {
+        throw new Error('invalid message', { cause: { data, type } })
+    }
+
+    function iconject (data) {
+        dricons = data
+    } 
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': {
+            '$ref': 'btc.svg'
+          },
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+        },
+        'style/': {
+          'style.css': {
+            '$ref': 'home_page_header.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_page_header/home_page_header.js")
+},{"STATE":57}],21:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = input_field
+
+async function input_field (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  
+  let dricons = [] // store icons globally for component
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="input-field-container"></div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.input-field-container')
+  
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data 
+  }
+
+async function ondata (data) {
+  const { header, placeholder, address, icon } = data[0]
+
+  container.innerHTML = `
+       ${header ? `<div class="contact-header">${header}</div>` : ''}
+      <div class="input-field">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="${placeholder}"
+        />
+         ${icon 
+          ? `<span class="icon">${dricons[0] || ""}</span>` 
+          : ''}
+      </div>
+    ` 
+  
+  const input = container.querySelector('.search-input')
+  const copy_icon = container.querySelector('.icon')
+
+  if (copy_icon) {
+    copy_icon.onclick = async () => {
+      try {
+        if (!input.value && address) input.value = address;
+
+        const textToCopy = input.value;
+        if (!textToCopy) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(textToCopy);
+          console.log("Copied via navigator.clipboard:", textToCopy);
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = textToCopy;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+          console.log("Copied via execCommand fallback:", textToCopy);
+        }
+
+      } catch (err) {
+        console.error("Failed to copy:", err);
+      }
+    };
+  }
+}
+
+
+
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+        'icons/': {
+          'copy.svg': { '$ref': 'copy.svg' },
+        },
+        'style/': {
+          'style.css': {
+            '$ref': 'input_field.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          },
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/input_field/input_field.js")
+},{"STATE":57}],22:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = light_page_header
+
+async function light_page_header (opts = {}) {
+    const { id, sdb } = await get(opts.sid)
+    const { drive } = sdb
+
+    const on = {
+        style: inject,
+        data: ondata,
+        icons: iconject,
+    }
+
+    const el = document.createElement('div')
+    const shadow = el.attachShadow({ mode: 'closed' })
+
+    let dricons = []
+
+    shadow.innerHTML = `
+        <div class="header-container">
+   
+        </div>
+        <style></style>
+    `
+
+    const style = shadow.querySelector('style')
+    const container = shadow.querySelector('.header-container')
+
+    await sdb.watch(onbatch)
+    return el
+
+    async function onbatch (batch) {
+        for (const { type, paths } of batch) {
+        const data = await Promise.all(
+            paths.map(path => drive.get(path).then(file => file.raw))
+        )
+        const func = on[type] || fail
+        await func(data, type)
+        }
+    }
+
+    function inject (data) {
+        style.textContent = data[0]
+    }
+
+    async function ondata (data) {
+      const { wallet, amount } = data[0]
+  
+      let heading = ""
+      let icon = ""
+      let display_amount = amount > 0 ? amount : "0.00"
+
+      if (wallet == "btc"){
+        heading = "Bitcoin Wallet"
+        icon = dricons[0]
+      } else if (wallet == "lightning"){
+        heading = "Lightning Wallet"
+        icon = dricons[1]
+      } else{
+        console.log("Wrong wallet")
+      }
+
+      container.innerHTML = `
+          <div class="heading">${heading}</div>
+          <div class="wallet-row">
+            <div class="icon-slot">${icon}</div>
+            <div class="wallet-amount">${display_amount}</div>
+          </div>
+      ` 
+    }
+
+
+    function fail (data, type) {
+        throw new Error('invalid message', { cause: { data, type } })
+    }
+
+    function iconject (data) {
+        dricons = data
+    } 
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': {
+            '$ref': 'btc.svg'
+          },
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+        },
+        'style/': {
+          'style.css': {
+            '$ref': 'light_page_header.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_page_header/light_page_header.js")
+},{"STATE":57}],23:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+const light_tx_row = require('light_tx_row')
+
+module.exports = light_tx_history
+
+async function light_tx_history(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="transaction-history">
+      <div class="transaction-history-header">
+        <span>Transaction History</span>
+        <button class="history-close">✕</button>
+      </div>
+      <div class="transaction-history-body"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.transaction-history')
+  const body = shadow.querySelector('.transaction-history-body')
+  const closeBtn = shadow.querySelector('.history-close')
+
+  const subs = await sdb.watch(onbatch)
+
+  // hide overlay on close
+  closeBtn.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  // build grouped list
+  const grouped = {}
+  subs.forEach(sub => {
+    const date = (sub.date || 'Unknown').trim()
+    if (!grouped[date]) grouped[date] = []
+    grouped[date].push(sub)
+  })
+
+  for (const date in grouped) {
+    const dateEl = document.createElement('div')
+    dateEl.className = 'transaction-date'
+    dateEl.textContent = date
+    body.appendChild(dateEl)
+
+    for (const sub of grouped[date]) {
+      const row = await light_tx_row(sub)
+      body.appendChild(row)
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(p => drive.get(p).then(f => f.raw))
+      )
+      const fn = on[type] || fail
+      await fn(data)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata() {}
+}
+
+function fallback_module () {
+  return {
+    api,
+    _: {
+      'light_tx_row':{
+        $: ''
+      }
+    } 
+  }
+  function api(opts){
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const light_tx_row = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      }
+    }
+    opts.value.forEach((transaction, index) => {
+      light_tx_row[index] = transaction
+    })
+    return {
+      drive: {
+        'style/': {
+          'style.css':{
+            '$ref': 'light_tx_history.css'
+          }
+        },
+        'data/': {
+          'opts.json':{
+            raw: opts || {}
+          }
+        }
+      },
+      _:{
+        light_tx_row
+      }
+    }
+  }
+}
+
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_history/light_tx_history.js")
+},{"STATE":57,"light_tx_row":26}],24:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const light_tx_row = require('light_tx_row')
+const light_tx_history = require('light_tx_history') 
+
+module.exports = light_tx_list
+
+
+async function light_tx_list(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'open' })
+
+  shadow.innerHTML = `
+    <div class="transaction-list-container">
+      <div class="transaction-list-header">
+        <div class="transaction-list-title">Transactions</div>
+        <div class="transaction-list-see-all">See all</div>
+      </div>
+      <div class="transaction-list-body"></div>
+    </div>
+
+    <div class="transaction-overlay hidden">
+      <div class="transaction-history-body"></div>
+    </div>
+
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const listBody = shadow.querySelector('.transaction-list-body')
+  const seeAllBtn = shadow.querySelector('.transaction-list-see-all')
+  const overlay = shadow.querySelector('.transaction-overlay')
+  const historyBody = shadow.querySelector('.transaction-history-body')
+
+  let historyMounted = false
+
+  const subs = await sdb.watch(onbatch)
+
+  // render small list
+  subs.slice(1, 5).forEach(async sub => {
+    listBody.append(await light_tx_row(sub))
+  })
+
+  // open overlay
+  seeAllBtn.addEventListener('click', async () => {
+    overlay.classList.remove('hidden')
+
+    if (!historyMounted) {
+      const history = await light_tx_history(subs[0], {
+        onClose: () => overlay.classList.add('hidden')
+      })
+      historyBody.append(history)
+      historyMounted = true
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(p => drive.get(p).then(f => f.raw))
+      )
+      const fn = on[type] || fail
+      await fn(data)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function ondata() {}
+}
+
+function fallback_module () {
+  return {
+    api,
+    _: {
+      'light_tx_history':{ $: ''},
+      'light_tx_row':{ $: '' },
+    } 
+  }
+  function api(opts){
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const light_tx_history = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      },
+      0: {
+        value:[
+        { tid: 'skdmf932ksdmf0234lsd', ttime: '09:15 AM', tamount: '-0.00123', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        { tid: 'skdmf932hiuo1h2oihio', ttime: '04:20 PM', tamount: '-0.00234', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        { tid: 'skdmf932ksdmf0234lsd', ttime: '09:15 AM', tamount: '-0.00123', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        { tid: 'skdmf932hiuo1h2oihio', ttime: '04:20 PM', tamount: '-0.00234', avatar: '' },
+        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        ]
+      }
+    }
+
+
+    const light_tx_row = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      }
+    }
+    opts.value.forEach((transaction, index) => {
+      light_tx_row[index] = transaction
+    })
+    return {
+      drive: {
+        'style/': {
+          'light_tx_list.css':{
+            '$ref': 'light_tx_list.css'
+          }
+        },
+        'data/': {
+          'opts.json':{
+            raw: opts || {}
+          }
+        }
+      },
+      _:{
+        light_tx_history,
+        light_tx_row
+      }
+    }
+  }
+}
+
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_list/light_tx_list.js")
+},{"STATE":57,"light_tx_history":23,"light_tx_row":26}],25:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const receipt_row = require('receipt_row')
+
+module.exports = light_tx_receipt
+
+async function light_tx_receipt(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  let dricons = []
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="receipt-card">
+      <div class="receipt-header">
+        <div class="title-container">
+          <div class="receipt-title">Lightning Transaction</div>
+          <div class="light-icon-small"></div>
+        </div>
+        <div class="close-icon"></div>
+      </div>
+      <div class="receipt-rows"></div>
+      <style></style>
+    </div>
+  `
+
+  const style = shadow.querySelector('style')
+  const rows_el = shadow.querySelector('.receipt-rows')
+  const close_icon = shadow.querySelector('.close-icon')
+
+  close_icon.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+  const subs = await sdb.watch(onbatch)
+
+  for (let i = 0; i < subs.length; i++) {
+    const row = await receipt_row(subs[i]) 
+    rows_el.append(row)
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const btcIcons = shadow.querySelectorAll('.light-icon-small')
+    const closeIcon = shadow.querySelector('.close-icon')
+
+    btcIcons.forEach(el => el.innerHTML = dricons[0])
+    closeIcon.innerHTML = dricons[1]                  
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'receipt_row': { 
+        $: '' 
+      }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    const receipt_row = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      }
+    }
+    opts.value.forEach((row, index) => {
+      receipt_row[index] = row
+    })
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': { '$ref': 'lightning.svg' },
+          'x.svg': { '$ref': 'x.svg' }
+        },
+        'style/': {
+          'light_tx_receipt.css': { '$ref': 'light_tx_receipt.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+      _: { receipt_row }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_receipt/light_tx_receipt.js")
+},{"STATE":57,"receipt_row":34}],26:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const light_tx_receipt = require('light_tx_receipt')
+
+
+module.exports = light_tx_row
+
+async function light_tx_row (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="transaction-row"></div>
+    <div class="tx-overlay hidden">
+      <div class="tx-body"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.transaction-row')
+  const overlay = shadow.querySelector('.tx-overlay')
+  const tx_body = shadow.querySelector('.tx-body')
+
+  const subs = await sdb.watch(onbatch)
+
+  let receipt_mounted = false
+
+  row.addEventListener('click', async () => {
+    overlay.classList.remove('hidden')
+
+    if (!receipt_mounted) {
+      const receipt_view_comp = await light_tx_receipt(subs[0], {
+        onClose: () => overlay.classList.add('hidden')
+      })
+      tx_body.append(receipt_view_comp)
+      receipt_mounted = true
+    }
+  })
+
+  return el
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  function get_date_label (dateString) {
+    const today = new Date()
+    const target = new Date(dateString)
+
+    const diffInDays = Math.floor(
+      (today.setHours(0, 0, 0, 0) - target.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+    )
+
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+  }
+
+  function shorten_tid (tid) {
+    if (tid.length > 14) {
+      return tid.slice(0, 8) + '...' + tid.slice(-4)
+    }
+    return tid
+  }
+
+  function generate_avatar (seed) {
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(seed)}`
+  }
+
+  function is_random_string (str) {
+    if (!str) return true
+    if (/[0-9@#$_-]/.test(str)) return true
+    if (str.length > 12 && !/\s/.test(str)) return true
+
+    const upper = (str.match(/[A-Z]/g) || []).length
+    const lower = (str.match(/[a-z]/g) || []).length
+    if ((upper > 4 && lower > 4) && !/\s/.test(str)) return true
+
+    return false
+  }
+
+  async function ondata (data) {
+    let { avatar, tid, ttime, tamount, dateString } = data[0] || {}
+
+    if (!tid) tid = "No id found"
+
+    if (!avatar) {
+      if (is_random_string(tid)) {
+        avatar = generate_avatar(tid)
+      } else {
+        avatar = 'https://cdn-icons-png.flaticon.com/512/847/847969.png'
+      }
+    }
+
+    const display_tid = shorten_tid(tid)
+    const date_label = get_date_label(dateString || new Date().toISOString())
+
+    row.innerHTML = `
+      <div class="transaction-detail">
+        <div class="transaction-avatar">
+          <img src="${avatar}" alt="avatar" />
+        </div>
+        <div class="transaction-data">
+          <div class="transaction-id">${display_tid}</div>
+          <div class="transaction-time">${ttime || '—'}</div>
+          <div class="transaction-date">${date_label}</div>
+        </div>
+      </div>  
+      <div class="transaction-amount">
+        <span>${tamount || '0'} ₿</span>
+      </div> 
+    `
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+    _:{
+      light_tx_receipt: { $: '' },
+    }
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const light_tx_receipt = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+        0: {
+          value: [
+                { label: "Paid By", value: "Cypher" },
+                { label: "Recipient", value: "Luis fedrick - 1FfmbHfn...455p" },
+                { label: "Label", value: "Work Payment" },
+                { label: "Note", value: "This is the month of may invoice and i also updated everything too" },
+                { label: "Time & Date", value: "30 June 2025, 09:32 AM" },
+                { label: "Transaction Fees", value: "0.0001 BTC", convert: true },
+                { label: "Recipient Receives", value: "0.0019 BTC", convert: true },
+                { label: "Lightning Invoice", value: "lnbc625u1p5x5nc6pp5v93dv3x7d4e8wg6ud0gp5h93cmysznsrsxv9zz2va0td83pp95lsdqqcqzysxqrrsssp53qtuxu9mh9daajju22l9ka6qvq0x430d5fdm0c5q3j0lvmwhn23s9qxpqysgq2r88trs6ksy88605ff87668sgcrj6ze37h99vmpky6z3j5l0j2msgukypgnk8uqfecq8rv8a3tst6ela7d4j5spj280nl4pan6nvj9qpk57fp9" },
+                { label: "Total Amount", value: "0.0020 BTC",  icon: "lightning.svg", convert: true }
+              ]
+            },
+    }
+    return {
+        drive: {
+          'style/':{
+            'style.css':{
+              '$ref': 'light_tx_row.css'
+            }
+          },
+          'data/': {
+            'opts.json': {
+              raw: opts || {}
+            }
+          }
+        },
+        _: {
+          light_tx_receipt
+        }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_row/light_tx_row.js")
+},{"STATE":57,"light_tx_receipt":25}],27:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const general_button = require('general_button')
+const pay_invoice = require('pay_invoice')
+const create_invoice = require('create_invoice')
+
+module.exports = lightning_buttons
+
+async function lightning_buttons(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+  const _ = { pay_general: null, create_general: null }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="lightning-buttons-container">
+      <div class="pay-create-buttons">
+        <div id="pay-button-container"></div>
+        <div id="create-button-container"></div>
+      </div>
+    </div>
+    <div class="overlay pay-overlay hidden"></div>
+    <div class="overlay create-overlay hidden"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const pay_container = shadow.querySelector('#pay-button-container')
+  const create_container = shadow.querySelector('#create-button-container')
+  const pay_overlay = shadow.querySelector('.pay-overlay')
+  const create_overlay = shadow.querySelector('.create-overlay')
+
+  const subs = await sdb.watch(onbatch)
+
+  // -------------------- Protocol --------------------
+  let sendUp = () => {}
+  if (protocol) {
+    sendUp = protocol(msg => console.log('[lightning_buttons]:', msg))
+  }
+
+  // -------------------- Buttons --------------------
+  const pay_button = await general_button(subs[0], button_protocol('pay_general'))
+  const create_button = await general_button(subs[1], button_protocol('create_general'))
+
+  pay_container.appendChild(pay_button)
+  create_container.appendChild(create_button)
+
+  pay_button._action = 'pay_message'
+  create_button._action = 'create_message'
+
+  let pay_el = null, create_el = null
+
+  function close_all_overlays(except) {
+    if (except !== 'pay') pay_overlay.classList.add('hidden')
+    if (except !== 'create') create_overlay.classList.add('hidden')
+  }
+
+  // -------------------- Button Clicks --------------------
+  pay_button.onclick = async e => {
+    e.stopPropagation()
+    close_all_overlays('pay')
+    if (!pay_el) {
+      pay_el = await pay_invoice(subs[2], {
+        onClose: () => pay_overlay.classList.add('hidden')
+      })
+      pay_overlay.appendChild(pay_el)
+    }
+    pay_overlay.classList.remove('hidden')
+    sendUp({ from: 'lightning_buttons', type: 'pay', data: null })
+  }
+
+  create_button.onclick = async e => {
+    e.stopPropagation()
+    close_all_overlays('create')
+    if (!create_el) {
+      create_el = await create_invoice(subs[3], {
+        onClose: () => create_overlay.classList.add('hidden')
+      })
+      create_overlay.appendChild(create_el)
+    }
+    create_overlay.classList.remove('hidden')
+    sendUp({ from: 'lightning_buttons', type: 'create', data: null })
+  }
+
+  // -------------------- Initial Config --------------------
+  _.pay_general?.({ type: 'button_name', data: { name: 'Pay Invoice', action: 'pay_message' } })
+  _.create_general?.({ type: 'button_name', data: { name: 'Create Invoice', action: 'create_message' } })
+
+  return el
+
+  // -------------------- Helpers --------------------
+  function fail(data, type) { throw new Error('Invalid message type', { cause: { data, type } }) }
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const handler = on[type] || fail
+      handler(data, type)
+    }
+  }
+  function inject(data) { style.textContent = data[0] }
+  async function ondata(data) { const buttonData = data[0]?.value || {} }
+  function button_protocol(key) { return send => { _[key] = send; return send } }
+}
+
+// ------------------ Fallback ------------------
+function fallback_module() {
+  return {
+    api,
+    _: { 'general_button': { $: '' }, 'pay_invoice': { $: '' }, 'create_invoice': { $: '' } }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const general_button = { mapping: { style: 'style', data: 'data' }, 0: {}, 1: {} }
+    const pay_invoice = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 2: '' }
+    const create_invoice = { mapping: { style: 'style', data: 'data', icons: 'icons' }, 3: '' }
+
+    return {
+      drive: {
+        'style/': { 'lightning_buttons.css': { '$ref': 'lightning_buttons.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { general_button, pay_invoice, create_invoice }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/lightning_buttons/lightning_buttons.js")
+},{"STATE":57,"create_invoice":13,"general_button":17,"pay_invoice":30}],28:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const home_contents = require('home_contents')
+const contacts_list = require('contacts_list')
+const details_menu = require('details_menu')
+const more_menu = require('more_menu')
+
+module.exports = menu
+
+async function menu(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  const on = { style: inject, data: ondata, icons: iconject }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="main-container">
+      <div class="content-container"></div>
+      <div class="menu-container"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const footer = shadow.querySelector('.menu-container')
+  const content = shadow.querySelector('.content-container')
+
+  let dricons = []
+  const subs = await sdb.watch(onbatch)
+
+  // ✅ Create all components once
+  const home_component = await home_contents(subs[0])
+  const contacts_component = await contacts_list(subs[1])
+  const details_component = await details_menu(subs[2])
+  const more_component = await more_menu(subs[3])
+
+  // ✅ Append all, hide except Home`
+  content.appendChild(home_component)
+  content.appendChild(contacts_component)
+  content.appendChild(details_component)
+  content.appendChild(more_component)
+
+  contacts_component.style.display = 'none'
+  details_component.style.display = 'none'
+  more_component.style.display = 'none'
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    footer.innerHTML = `
+      <div class="tab-container active" data-tab="home">
+        <div class="icon">${dricons[0]}</div>
+        <div class="label">Home</div>
+      </div>
+      <div class="tab-container" data-tab="contacts">
+        <div class="icon">${dricons[1]}</div>
+        <div class="label">Contacts</div>
+      </div>
+      <div class="tab-container" data-tab="details">
+        <div class="icon">${dricons[2]}</div>
+        <div class="label">Details</div>
+      </div>
+      <div class="tab-container" data-tab="more">
+        <div class="icon">${dricons[3]}</div>
+        <div class="label">More</div>
+      </div>
+    `
+
+    footer.querySelectorAll('.tab-container').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabType = tab.dataset.tab
+        footer.querySelectorAll('.tab-container').forEach(t => t.classList.remove('active'))
+        tab.classList.add('active')
+
+        // ✅ Hide all first
+        home_component.style.display = 'none'
+        contacts_component.style.display = 'none'
+        details_component.style.display = 'none'
+        more_component.style.display = 'none'
+
+        // ✅ Show only the selected one
+        if (tabType === 'home') home_component.style.display = ''
+        if (tabType === 'contacts') contacts_component.style.display = ''
+        if (tabType === 'details') details_component.style.display = ''
+        if (tabType === 'more') more_component.style.display = ''
+      })
+    })
+  }
+
+  function iconject(data) {
+    dricons = data
+  }
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+}
+
+function fallback_module() {
+  return {
+    api: fallback_instance,
+    _: {
+      home_contents: { $: '' },
+      contacts_list: { $: '' },
+      details_menu: { $: '' },
+      more_menu: { $: '' }
+    }
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const home_contents = {
+      mapping: { style: 'style', data: 'data' },
+      0: { text: '🏠 Home Content Loaded' }
+    }
+
+    const contacts_list = {
+      mapping: { style: 'style', data: 'data' },
+      0: {
+        value: [
+          {
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=",
+            name: 'Mark Kevin',
+            message: 'Payment Received successfully',
+            time: '3 hr',
+            unread: 5,
+            online: true,
+            lightining: true,
+            code: "1FfmbHfn...455p",
+            amount: 0.0054,
+            date: "25 June 2025",
+            status: "expired", 
+            is_me: false
+          },
+          {
+            avatar: "https://tse2.mm.bing.net/th/id/OIP.255ajP8y6dHwTTO8QbBzqwHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
+            name: 'David Clark',
+            message: 'You have a new message from Mark',
+            time: '1 hr',
+            unread: 5,
+            online: false,
+            lightining: false,
+            code: "1FfmbHfn...455p",
+            amount: 0.0054,
+            date: "25 June 2025",
+            status: "expired", 
+            is_me: false
+          },
+          {
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3",
+            name: 'David Clark',
+            message: 'Received funds',
+            time: '1 hr',
+            unread: 0,
+            online: true,
+            lightining: true,
+            code: "1FfmbHfn...455p",
+            amount: 0.0054,
+            date: "25 June 2025",
+            status: "expired", 
+            is_me: false
+          },
+          {
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.7XLV6q-D_hA-GQh_eJu52AHaHa?rs=1&pid=ImgDetMain&o=7&rm=3",
+            name: 'Sara Ahmed',
+            message: 'Invoice sent',
+            time: '2 hr',
+            unread: 0,
+            online: false,
+            lightining: false,
+            code: "1FfmbHfn...455p",
+            amount: 0.0054,
+            date: "25 June 2025",
+            status: "expired", 
+            is_me: false
+          }
+        ]
+      }
+    }
+
+    const details_menu = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: { text: '📋 Details Menu Content Loaded' }
+    }
+
+    const more_menu = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: { text: '⚙️ More Menu Content Loaded' }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'home.svg': { '$ref': 'home.svg' },
+          'contacts.svg': { '$ref': 'contacts.svg' },
+          'details.svg': { '$ref': 'details.svg' },
+          'more.svg': { '$ref': 'more.svg' }
+        },
+        'style/': { 'menu.css': { '$ref': 'menu.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { home_contents, contacts_list, details_menu, more_menu }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/menu/menu.js")
+},{"STATE":57,"contacts_list":12,"details_menu":15,"home_contents":18,"more_menu":29}],29:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const btc_nodes = require('btc_nodes')
+
+module.exports = more_menu
+
+async function more_menu(opts = {}) {
+  const { sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata, icons: iconject }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'open' })
+
+  let icons = []
+
+  shadow.innerHTML = `
+    <div class="more-menu-container"></div>
+    <div class="nodes-container hidden"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const menuContainer = shadow.querySelector('.more-menu-container')
+  const nodesContainer = shadow.querySelector('.nodes-container')
+
+  const subs = await sdb.watch(onbatch)
+
+  // Render menu options
+  ondata()
+
+  let nodesMounted = false
+
+  // Event delegation: click on Nodes
+  menuContainer.addEventListener('click', async (e) => {
+    const target = e.target.closest('.option-container')
+    if (!target) return
+
+    const label = target.querySelector('.option-label')?.textContent
+    if (label === 'Nodes') {
+      nodesContainer.classList.remove('hidden')
+
+      if (!nodesMounted) {
+        const nodesComponent = await btc_nodes(subs[0], {
+          onClose: () => nodesContainer.classList.add('hidden')
+        })
+        nodesContainer.append(nodesComponent)
+        nodesMounted = true
+      }
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    icons = data
+    ondata()
+  }
+
+  function ondata() {
+    menuContainer.innerHTML = `
+      <div class="container-title">
+        <div class="title">More</div>
+      </div>
+      <div class="option-container">
+        <div class="dot-icon">${icons[1] || ''}</div>
+        <div class="option-label">Nodes</div>
+      </div>
+      <div class="option-container">
+        <div class="dot-icon">${icons[1] || ''}</div>
+        <div class="option-label">Peers</div>
+      </div>
+    `
+  }
+}
+
+function fallback_module() {
+
+  return {
+    api: fallback_instance,
+    _: { btc_nodes: { $: '' } }
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const btc_nodes = {
+      mapping: { icons: 'icons', style: 'style', data: 'data' },
+      0: {}
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+          'dot.svg': { '$ref': 'dot.svg' }
+        },
+        'style/': { 'style.css': { '$ref': 'more_menu.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { btc_nodes }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/more_menu/more_menu.js")
+},{"STATE":57,"btc_nodes":5}],30:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const pay_button = require('button')
+const invoice_input = require('input_field')
+const pay_invoice_confirmation = require('pay_invoice_confirmation')
+
+module.exports = pay_invoice
+
+async function pay_invoice(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="pay-invoice-container">
+      <div class="pay-invoice-header">  
+        <div class="title-container"> 
+          <div class="header-title">Pay Lightning Invoice</div>
+          <div class="lightning-icon"></div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="invoice-input"></div>
+      <div class="pay_button"></div>
+    </div>
+    <div class="confirmation-container hidden"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const button_container = shadow.querySelector('.pay_button')
+  const invoice_input_component = shadow.querySelector('.invoice-input')
+  const confirmation_container = shadow.querySelector('.confirmation-container')
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await pay_button(subs[0])
+  const invoice_component = await invoice_input(subs[1])
+
+  button_container.append(button_component)
+  invoice_input_component.append(invoice_component)
+
+  let invoice_mounted = false 
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  button_container.addEventListener('click', async () => {
+    confirmation_container.classList.remove('hidden')
+
+      if (!invoice_mounted) {
+      const invoice = await pay_invoice_confirmation(subs[2], {
+        onClose: () => confirmation_container.classList.add('hidden')
+      })
+      confirmation_container.append(invoice)
+      invoice_mounted = true
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const lightning_icon = shadow.querySelector('.lightning-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+
+    lightning_icon.innerHTML = dricons[0]
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {}
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'input_field': { $: '' },
+      'pay_invoice_confirmation': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Pay Invoice'
+      }    
+    }
+    
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      1: {
+        header: 'Lightning Invoice',
+        placeholder: 'Tap to paste your lightning invoice',
+        address: 'lnbc1u1p0exampleinvoicehere1234567890'  // demo value
+      }    
+    }
+
+    const pay_invoice_confirmation = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+        value: [
+              { label: "Amount", value: "0.0030 BTC", convert: true },
+              { label: "Fee", value: "0.0001 BTC", convert: true },
+              { label: "Recipient Address", value: "7RwmbHfn...455p" },
+              { label: "Processing time", value: "< 5 minutes" },
+              { label: "Total (inc. fee)", value: "0.0031 BTC ",  icon: "lightning.svg", convert: true }
+            ]
+      },  
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'pay_invoice.css': {
+            '$ref': 'pay_invoice.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        input_field,
+        pay_invoice_confirmation
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pay_invoice/pay_invoice.js")
+},{"STATE":57,"button":8,"input_field":21,"pay_invoice_confirmation":31}],31:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const receipt_row = require('receipt_row')
+const send_button = require('button') 
+
+module.exports = pay_invoice_confirmation
+
+async function pay_invoice_confirmation(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  let dricons = []
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="invoice-card">
+      <div class="invoice-header">
+        <div class="invoice-title-section">
+          <div class="invoice-confirmation">Confirmation</div>
+          <div class="invoice-amount">
+            <div class="light-icon-small"></div>
+            <div class="invoice-value" id="invoice-value">0.0000</div>
+          </div>       
+        </div>
+        <div class="close-icon"></div>
+      </div>
+      <div class="receipt-rows"></div>
+      <div class="send-button"></div>
+      <style></style>
+    </div>
+    `
+
+  const style = shadow.querySelector('style')
+  const rows_el = shadow.querySelector('.receipt-rows')
+  const send_button_container = shadow.querySelector('.send-button')
+  const close_icon = shadow.querySelector('.close-icon')
+
+  const subs = await sdb.watch(onbatch)
+
+
+  if (subs.length > 0) {
+    const button = await send_button(subs[0])
+    send_button_container.replaceWith(button)
+  }
+
+  for (let i = 1; i < subs.length; i++) {
+    const row = await receipt_row(subs[i]) 
+    rows_el.append(row)
+  }
+
+
+  // close on click
+  close_icon.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const light_icon = shadow.querySelectorAll('.light-icon-small')
+    const close_icon = shadow.querySelector('.close-icon')
+
+    light_icon.forEach(el => el.innerHTML = dricons[0])
+    close_icon.innerHTML = dricons[1]                  
+  }
+
+  async function ondata(data) {
+
+    const {value} = data?.[0] || {}
+    const btc_value = value[0].value
+    const valueEl = shadow.querySelector('.invoice-value')
+    
+    valueEl.textContent = btc_value
+
+  }
+}
+
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'receipt_row': { 
+        $: '' 
+      }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      0: {
+        label: 'Pay invoice'
+      }
+    }
+    const receipt_row = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      }
+    }
+    opts.value.forEach((row, index) => {
+      receipt_row[index + 1] = row
+    })
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': { '$ref': 'lightning.svg' },
+          'x.svg': { '$ref': 'x.svg' }
+        },
+        'style/': {
+          'pay_invoice_confirmation.css': { '$ref': 'pay_invoice_confirmation.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+      _: { button, receipt_row }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pay_invoice_confirmation/pay_invoice_confirmation.js")
+},{"STATE":57,"button":8,"receipt_row":34}],32:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const state_db = STATE(__filename)
+const { sdb, get } = state_db(fallback_module)
+
+module.exports = btc_req_msg
+
+async function btc_req_msg(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject_style,
+    data: render_data,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+  shadow.innerHTML = `
+    <div class="receipt-card">
+      <div class="receipt-header">
+        <div class="title-container">
+          <div class="receipt-title">Pending Request</div>
+          <div class="light-icon-small"></div>
+        </div>
+        <div class="x-icon"></div>
+      </div>
+      <div class="btc_req_wrapper"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const wrapper = shadow.querySelector('.btc_req_wrapper')
+  let dricons = []
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  await sdb.watch(on_batch)
+  return el
+
+  function throw_error(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  
+
+  async function on_batch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const fn = on[type] || throw_error
+      await fn(data, type)
+    }
+  }
+
+  function inject_style(data) {
+    style.textContent = data[0]
+  }
+
+
+  function iconject(data) {
+    dricons = data
+    const closeIcon = shadow.querySelector('.x-icon')
+    closeIcon.innerHTML = dricons[0]                  
+  }
+
+  function render_data(data) {
+    const {name, amount, date, is_me } = data[0]
+
+    // Helper to build each variant box
+    function render_variant(label, border_color, bg_color, btn_color) {
+      return `
+        <div class="btc_row ${is_me ? 'self' : ''}">
+          <div class="btc_box" style="border:2px solid ${border_color}; background:${bg_color}">
+            <div class="btc_top">
+              <span>
+                <span class="name_text">${name}</span>
+                <span class="req_text"> requests </span>
+                <span class="amount_text">BTC ${amount} </span>
+              </span>
+            </div>
+            <div class="btc_bottom">
+              <span class="btc_expire">Expire at ${date}</span>
+              <button class="status_btn" style="background:${btn_color};">${label}</button>
+            </div>
+          </div>
+        </div>
+
+      `
+    }
+
+    // Always show all three variants
+    wrapper.innerHTML = `
+      ${render_variant('Pay', '#DDB473', '#FFFCE7', '#F7931A')}
+      ${render_variant('Pay', '#DDB473', '#FFFCE7', '#F7931A')}
+      ${render_variant('Pay', '#DDB473', '#FFFCE7', '#F7931A')}
+    `
+  }
+}
+
+function fallback_module() {
+  return {
+    api: fallback_instance,
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': {
+            '$ref': 'x.svg'
+          }
+        },
+        'style/': {
+          'pending_request.css': {
+            '$ref': 'pending_request.css'
+          }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {}   }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pending_request/pending_request.js")
+},{"STATE":57}],33:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const { VanillaQR } = require("vanillaqr")
+
+module.exports = qr_code
+
+async function qr_code(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="qr-container"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const qr_container = shadow.querySelector('.qr-container')
+
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const {address} = data[0]
+    await render_qr_code(address)
+  }
+
+  async function render_qr_code(address) {
+    
+
+    const qr = new VanillaQR({
+      url: address,
+      size: 280,
+      colorLight: '#ffffffff',
+      ecclevel: 4,
+      noBorder: true,
+    })
+    
+    qr_container.appendChild(qr.toImage('png')) 
+  }
+}
+
+function fallback_module() {
+  return {
+    api
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'style/': {
+          'qr_code.css': {
+            raw: ``
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/qr_code/qr_code.js")
+},{"STATE":57,"vanillaqr":54}],34:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = receipt_row
+
+const btc_usd_rate = require('btc_usd_rate')
+
+async function receipt_row(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  let dricons = []
+  let current_unit = 'BTC'
+  let btc_to_usd = await btc_usd_rate()
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="receipt-row"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.receipt-row')
+
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+  }
+
+  async function ondata(data) {
+    let { label, value, link, icon, convert } = data[0] || {}
+
+    let value_html = value || ""
+    let icon_html = ""
+
+    if (link) {
+      value_html = `<a href="${value}" target="_blank" class="receipt-link">${value}</a>`
+      row.className = `receipt-row link`
+    }
+
+    if (icon) {
+      if (icon == "btc.svg") {
+        icon_html = `<span class="receipt-icon">${dricons[1]}</span>`
+        row.className = `receipt-row total`
+      } else if (icon == "lightning.svg") {
+        icon_html = `<span class="receipt-icon">${dricons[2]}</span>`
+        row.className = `receipt-row total`
+      } else {
+        icon_html = `<span class="receipt-icon">${dricons[0]}</span>`
+      }
+      value_html = `${icon_html}${value}`
+    }
+
+    // Base layout
+    row.innerHTML = `
+      <div class="receipt-label">${label}</div>
+      <div class="receipt-bottom">
+        <div class="receipt-value">${value_html}</div>
+        ${convert ? `
+          <div class="convert-buttons">
+            <button class="convert-btn btc active">BTC</button>
+            <button class="convert-btn usd">USD</button>
+          </div>` : ""}
+      </div>
+      ${icon ? "" : `<div class="divider"></div>`}
+      <div class="copy-popup">Copied!</div>
+    `
+
+    const value_el = row.querySelector('.receipt-value')
+    const popup_el = row.querySelector('.copy-popup')
+
+    value_el.ondblclick = () => {
+      const textToCopy = value_el.textContent.replace(/^\$/, '').trim()
+
+      // Copy fallback
+      const doCopy = () => {
+        const textarea = document.createElement('textarea')
+        textarea.value = textToCopy
+        document.body.appendChild(textarea)
+        textarea.select()
+        try { document.execCommand('copy') } 
+        catch (err) { console.error('Failed to copy:', err) }
+        document.body.removeChild(textarea)
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).catch(doCopy)
+      } else {
+        doCopy()
+      }
+
+      
+
+      // Show popup above the value
+      popup_el.style.top = `${value_el.offsetTop - 25}px` // 25px above
+      popup_el.style.left = `${value_el.offsetLeft}px` // align left with value
+      popup_el.style.opacity = 1
+
+      setTimeout(() => { popup_el.style.opacity = 0 }, 800)
+    }
+
+    if (convert) {
+      const btc_btn = row.querySelector('.convert-btn.btc')
+      const usd_btn = row.querySelector('.convert-btn.usd')
+
+      btc_btn.onclick = () => {
+        current_unit = 'BTC'
+        btc_btn.classList.add('active')
+        usd_btn.classList.remove('active')
+        value_el.innerHTML = `${icon_html}${value}`
+      }
+
+      usd_btn.onclick = () => {
+        current_unit = 'USD'
+        usd_btn.classList.add('active')
+        btc_btn.classList.remove('active')
+        let btc_value = parseFloat(value)
+        if (isNaN(btc_value)) btc_value = 0
+        let usd_value = (btc_value * btc_to_usd).toFixed(2)
+        value_el.innerHTML = `${icon_html}$${usd_value}`
+      }
+    }
+  }
+}
+
+function fallback_module() {
+  return {
+    api: fallback_instance
+  }
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'default.svg': { '$ref': 'default.svg' },
+          'btc.svg': { '$ref': 'btc.svg' },
+          'lightning.svg': { '$ref': 'lightning.svg' },
+        },
+        'style/': {
+          'receipt_row.css': { '$ref':'receipt_row.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/receipt_row/receipt_row.js")
+},{"STATE":57,"btc_usd_rate":7}],35:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const address_input = require('input_field')
+const qr_code = require('qr_code')
+
+module.exports = receive_btc
+
+async function receive_btc(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="receive-btc-container">
+      <div class="receive-btc-close">
+        <div class="x-icon"></div>
+      </div>
+      <div class="receive-btc-header">
+        <div class="title-container">
+          <div class="receive-btc-title">Receive BTC</div>
+          <div class="btc-icon"></div>
+        </div>
+      </div>
+      <div class="qr-code"></div>
+      <div class="address-input"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const address_input_component = shadow.querySelector('.address-input')
+  const qr_code_component = shadow.querySelector('.qr-code')
+
+  const subs = await sdb.watch(onbatch)
+
+  const qr_component = await qr_code(subs[0])
+  const address_component = await address_input(subs[1])
+
+  qr_code_component.append(qr_component)
+  address_input_component.append(address_component)
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) dropdown.classList.add('hidden')
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const btc_icon = shadow.querySelector('.btc-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+    btc_icon.innerHTML = dricons[0] || ''
+    x_icon.innerHTML = dricons[1] || '✖' // fallback X if icon missing
+  }
+
+  async function ondata(data) {}
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'input_field': { $: '' },
+      'qr_code': { $: '' }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+ 
+    const qr_code = {
+      mapping: { style: 'style', data: 'data' },
+      0: { address: '1BoatSLRHtKNngkdXEeobR76b53LETtpyT' }
+    }
+
+    const input_field = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      1: {
+        header: 'Your bitcoin address',
+        placeholder: '1BoatSLRHtKNngkdXEeobR76b53LETtpyT',
+        address: '1BoatSLRHtKNngkdXEeobR76b53LETtpyT',
+        icon: 'apple'
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': { 'btc.svg': { '$ref': 'btc.svg' }, 'x.svg': { '$ref': 'x.svg' } },
+        'style/': { 'receive_btc.css': { '$ref': 'receive_btc.css' } },
+        'data/': { 'opts.json': { raw: opts || {} } }
+      },
+      _: { qr_code, input_field }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/receive_btc/receive_btc.js")
+},{"STATE":57,"input_field":21,"qr_code":33}],36:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const btc_usd_rate = require('btc_usd_rate')
+
+module.exports = req_card
+
+async function req_card (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  
+  const on = {
+    style: inject,
+    data: ondata,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="btc-card"></div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.btc-card')
+  
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+    let {
+      currency = "BTC",
+      amount = 0,
+      usdValue: usd_value = 0,
+      balance = 0, 
+      show_balance = true
+    } = data[0]
+
+    const EXCHANGE_RATE = await btc_usd_rate('btc', 'usd')
+
+    container.innerHTML = `
+      <div class="header">
+        <span class="toggle ${currency === 'BTC' ? 'active' : ''}" data-currency="BTC">BTC</span>
+        <span class="toggle ${currency === 'USD' ? 'active' : ''}" data-currency="USD">USD</span>
+      </div>
+
+      <div class="main-area"> 
+        <div class="amount-row">
+          <input type="number" min="0" step="0.0001" value="0" class="amount-input" data-cleared="0" />
+          <div class="actions">
+            <button class="close-btn">✕</button>
+          </div>
+        </div>
+        <div class="usd-text">
+          You are requesting 
+          <strong>USD ${(amount * EXCHANGE_RATE).toFixed(2)}</strong>
+        </div>
+      </div>
+    `
+
+    const amount_input = container.querySelector('.amount-input')
+    const btc_toggle = container.querySelector('[data-currency="BTC"]')
+    const usd_toggle = container.querySelector('[data-currency="USD"]')
+    const usd_text = container.querySelector('.usd-text strong')
+    const close_btn = container.querySelector('.close-btn')
+    const toggles = container.querySelectorAll('.toggle')
+
+    function update_display(value, curr) {
+      amount_input.value = value
+      amount_input.dataset.cleared = "0" // reset wipe flag
+
+      usd_text.textContent = curr === 'BTC'
+        ? `USD ${usd_value}`
+        : `${amount} BTC`
+
+      toggles.forEach(t => t.classList.remove('active'))
+      if (curr === 'BTC') {
+        btc_toggle.classList.add('active')
+      } else {
+        usd_toggle.classList.add('active')
+      }
+    }
+
+    function on_toggle_btc() {
+      currency = 'BTC'
+      update_display(amount, currency)
+    }
+
+    function on_toggle_usd() {
+      currency = 'USD'
+      update_display(usd_value, currency)
+    }
+
+    function on_close_click() {
+      amount = 0
+      usd_value = 0
+      update_display("0", currency)
+    }
+
+    // --------- UPDATED INPUT HANDLER ---------
+    function on_amount_input() {
+      let val = amount_input.value
+
+      // wipe field on FIRST keypress
+      if (amount_input.dataset.cleared === "0" && val !== "0") {
+        val = val.slice(-1) // keep only the newest typed digit
+        amount_input.value = val
+        amount_input.dataset.cleared = "1"
+      }
+
+      // remove leading zeros like 07 → 7
+      if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+        val = val.replace(/^0+/, "")
+        amount_input.value = val
+      }
+
+      if (val === "" || isNaN(val)) val = "0"
+
+      if (currency === 'BTC') {
+        amount = parseFloat(val) || 0
+        usd_value = (amount * EXCHANGE_RATE).toFixed(2)
+      } else {
+        usd_value = parseFloat(val) || 0
+        amount = +(usd_value / EXCHANGE_RATE).toFixed(8)
+      }
+
+      usd_text.textContent = currency === 'BTC'
+        ? `USD ${usd_value}`
+        : `${amount.toFixed(8)} BTC`
+    }
+
+    // --------- EVENT BINDING ---------
+    btc_toggle.onclick = on_toggle_btc
+    usd_toggle.onclick = on_toggle_usd
+    close_btn.onclick = on_close_click
+    amount_input.oninput = on_amount_input 
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'style/': {
+          'style.css': {
+            '$ref': 'req_card.css'
+          }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {}},
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/req_card/req_card.js")
+},{"STATE":57,"btc_usd_rate":7}],37:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const create_button = require('button')
+const req_card = require('req_card')
+const templates = require('templates')
+
+module.exports = request_btc
+
+async function request_btc(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="create-invoice-container">
+      <div class="create-invoice-header">  
+        <div class="title-container"> 
+          <div class="create-invoice-header">Request Bitcoin</div>
+          <div class="btc-icon"></div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="btc-input-card"></div>
+      <div class="divider">
+        <div class="sub-divider"></div>
+        <div>Or</div>
+        <div class="sub-divider"></div>
+      </div>
+      <div class="templates-heading">Use Templates</div>
+      <div class="template1"></div>
+      <div class="template2"></div>
+      <div class="template3"></div>
+      <div class="create_button"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const create_button_component = shadow.querySelector('.create_button')
+  const btc_input_card_component = shadow.querySelector('.btc-input-card')
+  const template1_container = shadow.querySelector('.template1')
+  const template2_container = shadow.querySelector('.template2')
+  const template3_container = shadow.querySelector('.template3')
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await create_button(subs[0])
+  const btc_component = await req_card(subs[1])
+  const templates_component1 = await templates(subs[2])
+  const templates_component2 = await templates(subs[3])
+  const templates_component3 = await templates(subs[4])
+
+
+  create_button_component.append(button_component)
+  btc_input_card_component.append(btc_component)
+  template1_container.append(templates_component1)
+  template2_container.append(templates_component2)
+  template3_container.append(templates_component3)
+
+  const close_btn = shadow.querySelector('.x-icon')
+  if (close_btn) {
+    close_btn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const btc_icon = shadow.querySelector('.btc-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+
+    btc_icon.innerHTML = dricons[0]
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'req_card': { $: '' },
+      'templates': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Request'
+      }    
+    }
+    
+    const req_card = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      1: {
+      }  
+    } 
+
+    const templates = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+        date:"2025-05-10",
+        btc: 0.012,
+        usd: 200
+      },
+      3: {
+        date:"2024-12-25",
+        btc: 0.005,
+        usd: 80
+      },
+      4: {
+        date:"2024-01-01",
+        btc: 0.01,
+        usd: 150
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': {
+            '$ref': 'btc.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'request_btc.css': {
+            '$ref': 'request_btc.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        req_card,
+        templates      
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/request_btc/request_btc.js")
+},{"STATE":57,"button":8,"req_card":36,"templates":48}],38:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const create_button = require('button')
+const req_card = require('req_card')
+const input_field = require('input_field')
+const templates = require('templates')
+
+module.exports = request_light
+
+async function request_light(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="create-invoice-container">
+      <div class="create-invoice-header">  
+        <div class="title-container"> 
+          <div class="create-invoice-header">Request Lightning</div>
+          <div class="btc-icon"></div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="btc-input-card"></div>
+      <div class="extra-input1"></div>
+      <div class="extra-input2"></div>
+      <div class="divider">
+        <div class="sub-divider"></div>
+        <div>Or</div>
+        <div class="sub-divider"></div>
+      </div>
+      <div class="templates-heading">Use Templates</div>
+      <div class="template1"></div>
+      <div class="template2"></div>
+        <div class="template3"></div>
+      <div class="create_button"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const create_button_component = shadow.querySelector('.create_button')
+  const btc_input_card_component = shadow.querySelector('.btc-input-card')
+  const input1_component = shadow.querySelector('.extra-input1')
+  const input2_component = shadow.querySelector('.extra-input2')
+  const template1_container = shadow.querySelector('.template1')
+  const template2_container = shadow.querySelector('.template2')
+  const template3_container = shadow.querySelector('.template3')
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await create_button(subs[0])
+  const btc_component = await req_card(subs[1])
+  const input1 = await input_field(subs[2])
+  const input2 = await input_field(subs[3])
+  const templates_component1 = await templates(subs[4])
+  const templates_component2 = await templates(subs[5])
+  const templates_component3 = await templates(subs[6])
+
+
+  create_button_component.append(button_component)
+  btc_input_card_component.append(btc_component)
+  input1_component.append(input1)
+  input2_component.append(input2)
+  template1_container.append(templates_component1)
+  template2_container.append(templates_component2)
+  template3_container.append(templates_component3)
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const btc_icon = shadow.querySelector('.btc-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+
+    btc_icon.innerHTML = dricons[0]
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'req_card': { $: '' },
+      'input_field': { $: '' },
+      'templates': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Create Invoice'
+      }    
+    }
+    
+    const req_card = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      1: {
+        balance: 0.0024, 
+      }  
+    } 
+
+    const input_field = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+        placeholder: 'Enter invoice title',
+      },
+      3:{
+        placeholder: 'Enter invoice note'
+      }
+
+    }
+
+    const templates = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      4: {
+        date:"2025-05-10",
+        btc: 0.012,
+        usd: 200
+      },
+      5: {
+        date:"2024-12-25",
+        btc: 0.005,
+        usd: 80
+      },
+      6: {
+        date:"2024-01-01",
+        btc: 0.01,
+        usd: 150
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'lightning.svg': {
+            '$ref': 'lightning.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'request_light.css': {
+            '$ref': 'request_light.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        req_card,
+        input_field,
+        templates      
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/request_light/request_light.js")
+},{"STATE":57,"button":8,"input_field":21,"req_card":36,"templates":48}],39:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = search_bar
+
+async function search_bar(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata, icons: iconject }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="search-bar">
+      <input type="text" class="search-input" placeholder="Search" style="border:none; outline:none; font-size:14px; background:transparent; flex:1;" />
+      <div class="search-icon"><div class="icon-slot"></div></div>
+      <style></style>
+    </div>
+  `
+
+  const style = shadow.querySelector('style')
+  const input = shadow.querySelector('.search-input')
+  const icon = shadow.querySelector('.search-icon')
+
+  // 🔥 PROTOCOL
+  const sendToParent = msg => protocol?.(msg)
+
+  input.addEventListener('input', e => {
+    // optional live search
+    // sendToParent({ type: 'typing', value: e.target.value })
+  })
+
+  icon.addEventListener('click', () => {
+    sendToParent({ type: 'search', value: input.value })
+  })
+
+  await sdb.watch(onbatch)
+  return el
+
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+  async function onbatch(batch) { 
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(f => f.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) { style.textContent = data[0] }
+  async function ondata(data) {}
+  function iconject(data) { 
+    dricons = data
+    const icon_slot = shadow.querySelector('.icon-slot')
+    if (icon_slot && dricons[0]) icon_slot.innerHTML = dricons[0]
+  }
+}
+
+// Fallback module omitted for brevity (keep your current)
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+        drive: {
+          'icons/':{
+            'search.svg':{
+              '$ref': 'search.svg'
+            }
+          },
+          'style/':{
+            'style.css':{
+              '$ref': 'search_bar.css'
+            }
+          },
+          'data/': {
+            'opts.json': {
+              raw: opts || {}
+            }
+          }
+        }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/search_bar/search_bar.js")
+},{"STATE":57}],40:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const create_button = require('button')
+const btc_input_card = require('btc_input_card')
+const templates = require('templates')
+
+module.exports = send_btc
+
+async function send_btc(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="create-invoice-container">
+      <div class="create-invoice-header">  
+        <div class="title-container"> 
+          <div class="create-invoice-header">Send BTC</div>
+          <div class="btc-icon"></div>
+        </div>  
+        <div class="x-icon"></div>
+      </div>
+      <div class="btc-input-card"></div>
+      <div class="divider">
+        <div class="sub-divider"></div>
+        <div>Or</div>
+        <div class="sub-divider"></div>
+      </div>      
+      <div class="templates-heading">Use Templates</div>
+      <div class="template1"></div>
+      <div class="template2"></div>
+      <div class="template3"></div>
+      <div class="create_button"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const create_button_component = shadow.querySelector('.create_button')
+  const btc_input_card_component = shadow.querySelector('.btc-input-card')
+  const template1_container = shadow.querySelector('.template1')
+  const template2_container = shadow.querySelector('.template2')
+  const template3_container = shadow.querySelector('.template3')
+
+  const subs = await sdb.watch(onbatch)
+
+  const button_component = await create_button(subs[0])
+  const btc_component = await btc_input_card(subs[1])
+  const templates_component1 = await templates(subs[2])
+  const templates_component2 = await templates(subs[3])
+  const templates_component3 = await templates(subs[4])
+
+
+  create_button_component.append(button_component)
+  btc_input_card_component.append(btc_component)
+  template1_container.append(templates_component1)
+  template2_container.append(templates_component2)
+  template3_container.append(templates_component3)
+
+  const closeBtn = shadow.querySelector('.x-icon')
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      const dropdown = el.parentNode
+      if (dropdown) {
+        dropdown.classList.add('hidden')   
+      }
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject (data) {
+    dricons = data
+
+    const btc_icon = shadow.querySelector('.btc-icon')
+    const x_icon = shadow.querySelector('.x-icon')
+
+    btc_icon.innerHTML = dricons[0]
+    x_icon.innerHTML = dricons[1]
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'button': { $: '' },
+      'btc_input_card': { $: '' },
+      'templates': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    const button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      0: {
+        label: 'Send'
+      }    
+    }
+    
+    const btc_input_card = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+      },
+      1: {
+        balance: 0.0024, 
+      }  
+    } 
+
+    const templates = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+        date:"2025-05-10",
+        btc: 0.012,
+        usd: 200
+      },
+      3: {
+        date:"2024-12-25",
+        btc: 0.005,
+        usd: 80
+      },
+      4: {
+        date:"2024-01-01",
+        btc: 0.01,
+        usd: 150
+      }
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': {
+            '$ref': 'btc.svg'
+          },
+          'x.svg': {
+            '$ref': 'x.svg'
+          },
+        },
+        'style/': {
+          'send_btc.css': {
+            '$ref': 'send_btc.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        button,
+        btc_input_card,
+        templates      
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_btc/send_btc.js")
+},{"STATE":57,"btc_input_card":4,"button":8,"templates":48}],41:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const search_bar = require('search_bar') 
+const square_button = require('square_button') 
+const send_to_contact = require('send_to_contact')
+const share_invoice_via = require('share_invoice_via')
+
+module.exports = send_invoice_modal
+
+async function send_invoice_modal(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject
+  }
+
+  let dricons = []
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="send-to-container"> 
+      <div class="contact-list-container">
+        <div class="modal-header">
+          <div class="contact-list-header">Send to</div>
+          <div class="close-btn">x</div>
+        </div>
+        <div class="top-bar"></div>
+      </div>
+      <div class="contacts-container"></div>
+      <div class="invoice-share-section"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const contacts_container = shadow.querySelector('.contacts-container')
+  const top_bar = shadow.querySelector('.top-bar')
+  const invoice_section = shadow.querySelector('.invoice-share-section')
+  const close_icon = shadow.querySelector('.close-btn')
+
+  const subs = await sdb.watch(onbatch)
+
+  close_icon.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  if (subs.length > 0) {
+    const search = await search_bar(subs[0])
+    const button = await square_button(subs[1])
+    const invoice_share = await share_invoice_via(subs[2])
+    top_bar.append(search)
+    top_bar.append(button)  
+    invoice_section.append(invoice_share)
+  }
+
+  for (let i = 3; i < subs.length; i++) {
+    const contact = await send_to_contact(subs[i]) 
+    contacts_container.append(contact)
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+  }
+
+  function iconject(data) {
+    dricons = data
+    close_icon.innerHTML = dricons[0]
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'search_bar': { $: '' },
+      'send_to_contact': { $: '' },
+      'share_invoice_via': { $: ''},
+      'square_button': { $: '' },
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const search_bar = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      0: {
+      }
+    }
+
+    const square_button = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      1: {
+      }
+    }
+
+    const share_invoice_via = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      },
+      2: {
+      }
+    }
+
+    const send_to_contact = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+
+      }
+    }
+
+    opts.value.forEach((contact, index) => {
+      send_to_contact[index + 3] = contact
+    })
+
+    return {
+      drive: {
+        'icons/': {  
+          'x.svg': { 
+            '$ref': 'x.svg' 
+          } 
+        },
+        'style/': {
+          'send_invoice_modal.css': {
+            '$ref': 'send_invoice_modal.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {
+        search_bar,
+        square_button,
+        share_invoice_via,
+        send_to_contact
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_invoice_modal/send_invoice_modal.js")
+},{"STATE":57,"search_bar":39,"send_to_contact":42,"share_invoice_via":43,"square_button":44}],42:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = send_to_contact
+
+async function send_to_contact (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="contact-row"></div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.contact-row')
+  
+  let dricons = []
+  let selected = false
+
+  await sdb.watch(onbatch)
+
+  row.onclick = () => {
+    selected = !selected
+    update_tick()
+    update_selection()
+  }
+
+  return el
+
+
+  function update_tick() {
+    const avatarWrapper = row.querySelector('.contact-avatar')
+    if (!avatarWrapper) return
+
+    const oldTick = avatarWrapper.querySelector('.green-tick')
+    if (oldTick) oldTick.remove()
+
+    if (selected && dricons[0]) {
+      avatarWrapper.innerHTML += `
+        <div class="green-tick">
+          ${dricons[0] || ''}
+        </div>
+      `
+    }
+  }
+
+  function update_selection() {
+    if (selected) {
+      row.classList.add('selected')
+    } else {
+      row.classList.remove('selected')
+    }
+  }
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+    const { avatar, name } = data[0]
+
+    row.innerHTML = `
+      <div class="contact-left">
+        <div class="contact-avatar">
+          <img src="${avatar}" alt="avatar" />
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">${name}</div>
+        </div>
+      </div>
+    `
+
+    update_tick() 
+    update_selection()
+  }
+
+   function iconject (data) {
+    dricons = data
+  }
+}
+
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+        drive: {
+          'icons/': {
+            'green-tick.svg': {
+              '$ref': 'green-tick.svg'
+            },
+          },
+          'style/':{
+            'send_to_contact.css': {
+              '$ref': 'send_to_contact.css'
+            },
+          },
+          'data/': {
+            'opts.json': {
+              raw: opts || {}
+            }
+          }
+        }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_to_contact/send_to_contact.js")
+},{"STATE":57}],43:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = create_invoice_via
+
+async function create_invoice_via (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject_style,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="invoice-container">
+      <div class="header">Share invoice via</div>
+      <div class="divider"></div>
+      <div class="apps-row"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const apps_row = shadow.querySelector('.apps-row')
+
+  let dricons = []
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject_style (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata () {
+    const app_names = ['Instagram', 'WhatsApp', 'Facebook', 'Binance', 'Meta', 'Trust']
+
+    apps_row.innerHTML = app_names.map((name, i) => `
+      <div class="app-item">
+        <div class="icon-box">
+          ${dricons[i] || ''}
+        </div>
+        <div class="app-name">${name}</div>
+      </div>
+    `).join('')
+  }
+
+  function iconject (data) {
+    dricons = data
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'instagram.svg': { '$ref': 'instagram.svg' },
+          'whatsapp.svg': { '$ref': 'whatsapp.svg' },
+          'facebook.svg': { '$ref': 'facebook.svg' },
+          'binance.svg': { '$ref': 'binance.svg' },
+          'meta.svg': { '$ref': 'meta.svg' },
+          'trustwallet.svg': { '$ref': 'trustwallet.svg' },
+        },
+        'style/': {
+          'share_invoice_via.css': {
+            '$ref': 'share_invoice_via.css'
+          }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/share_invoice_via/share_invoice_via.js")
+},{"STATE":57}],44:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = square_button
+
+async function square_button (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <button class="square-btn">
+      <div class="icon-slot"></div>
+    </button>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+
+  await sdb.watch(onbatch)
+  return el
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+  }
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  function iconject (data) {
+    dricons = data
+    const icon_slot = shadow.querySelector('.icon-slot')
+    if (icon_slot && dricons[0]) {
+      icon_slot.innerHTML = dricons[0]
+    }
+  }
+
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'plus.svg': {
+            '$ref': 'plus.svg'
+          },
+        },
+        'style/': {
+          'style.css': {
+            '$ref': 'square_button.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/square_button/square_button.js")
+},{"STATE":57}],45:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+// require pages early
+
+module.exports = switch_account
+
+async function switch_account (opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="switch-account-container">
+      <div class="account-content"></div>
+    </div>
+    <style></style>
+  `
+  const style = shadow.querySelector('style')
+  const content = shadow.querySelector('.account-content')
+
+  const subs = await sdb.watch(onbatch)
+
+  // protocol pattern:
+  // protocol expects a function (sendToSwitch) and returns a function (sendFromSwitch).
+  // child calls protocol(sendToSwitch) and receives send() to send messages up.
+  const send = protocol ? protocol(function (messageToSwitch) {
+    // parent -> switch_account messages (not used currently)
+    console.log('[switch_account] message from parent ->', messageToSwitch)
+  }) : null
+
+  return el
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata (data) {
+    const { btc, lightning } = data[0] || {}
+
+    content.innerHTML = `
+      <div class="container-title">
+        <div class="title">Switch Account</div>
+        <div class="close-icon">${dricons[0] || '✕'}</div>   
+      </div>
+      <div class="account-container btc-container">
+        <div class="btc-icon">${dricons[1] || '₿'} BTC</div>
+        <div class="btc-amount">${typeof btc !== 'undefined' ? parseFloat(btc).toFixed(4) : '0.0000'}</div>       
+      </div>
+      <div class="account-container lightning-container">
+        <div class="lightning-icon">${dricons[2] || '⚡'} Lightning</div>
+        <div class="lightning-amount">${typeof lightning !== 'undefined' ? parseFloat(lightning).toFixed(4) : '0.0000'}</div>       
+      </div>
+    `
+
+    // Close button
+    const close_btn = content.querySelector('.close-icon')
+    if (close_btn) {
+      close_btn.onclick = () => {
+        const dropdown = el.parentNode
+        if (dropdown) dropdown.classList.add('hidden')
+      }
+    }
+
+    // BTC Click: send protocol message up
+    const btc_container = content.querySelector('.btc-container')
+    if (btc_container) {
+      btc_container.onclick = () => {
+        if (send) send({ type: 'switch', data: 'btc' })
+      }
+    }
+
+    // Lightning Click: send protocol message up
+    const lightning_container = content.querySelector('.lightning-container')
+    if (lightning_container) {
+      lightning_container.onclick = () => {
+        if (send) send({ type: 'switch', data: 'lightning' })
+      }
+    }
+  }
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  function iconject (data) {
+    dricons = data
+  }
+}
+
+// ================== fallback ==================
+function fallback_module () {
+  return {
+    api: fallback_instance,
+  }
+
+  function fallback_instance (opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+          'btc.svg': { '$ref': 'btc.svg' },
+          'lightning.svg': { '$ref': 'lightning.svg' }
+        },
+        'style/': {
+          'style.css': { '$ref': 'switch_account.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_account/switch_account.js")
+},{"STATE":57}],46:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const request_btc = require('request_btc')
+const request_light = require('request_light')
+
+module.exports = switch_request
+
+async function switch_request(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+  let showSendBtc = false
+
+  shadow.innerHTML = `
+    <div class="parent-wrapper">
+      <div class="switch-account-container">
+        <div class="account-content"></div>
+      </div>
+    </div>
+    <div class="request-btc hidden"></div>
+    <div class="request-light hidden"></div>
+
+    <style></style>
+  `
+
+  const content = shadow.querySelector('.account-content')
+  const style = shadow.querySelector('style')
+  const req_btc_el = shadow.querySelector('.request-btc')
+  const req_light_el = shadow.querySelector('.request-light')
+  
+  const subs = await sdb.watch(onbatch)
+
+  let btc_mounted = false
+  let light_mounted = false
+
+
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const fn = on[type] || fail
+      await fn(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { btc, lightning } = data[0] || {}
+
+    if (showSendBtc) return
+
+    content.innerHTML = `
+      <div class="account-container btc-container">
+        <div class="btc-icon">${dricons[1] || '₿'} BTC</div>
+      </div>
+
+      <div class="account-container lightning-container">
+        <div class="lightning-icon">${dricons[2] || '⚡'} Lightning</div>
+      </div>
+    `
+    const btc_container = content.querySelector('.btc-container')
+    const lightning_container = content.querySelector('.lightning-container')
+
+    btc_container.addEventListener('click', async () => {
+      req_btc_el.classList.remove('hidden')
+
+      if (!btc_mounted) {
+        const history = await request_btc(subs[0], {
+          onClose: () => req_btc_el.classList.add('hidden')
+        })
+        req_btc_el.append(history)
+        btc_mounted = true
+      }
+    })
+  
+    lightning_container.addEventListener('click', async () => {
+      req_light_el.classList.remove('hidden')
+
+      if (!light_mounted) {
+        const history = await request_light(subs[1], {
+          onClose: () => req_light_el.classList.add('hidden')
+        })
+        req_light_el.append(history)
+        light_mounted = true
+      }
+    })
+  }
+
+
+
+  function iconject(data) {
+    dricons = data
+  }
+
+  function fail(data, type) {
+    throw new Error("invalid message", { cause: { data, type } })
+  }
+}
+
+
+
+// ================== fallback ==================
+function fallback_module() {
+  return {
+    api: fallback_instance,
+    _: {
+      'request_btc': { $: '' },
+      'request_light': { $: '' }
+    }
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const request_btc = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: {}
+    }
+
+    const request_light = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      1: {}
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+          'btc.svg': { '$ref': 'btc.svg' },
+          'lightning.svg': { '$ref': 'lightning.svg' }
+        },
+        'style/': {
+          'style.css': { '$ref': 'switch_request.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+      _: { request_btc, request_light}
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_request/switch_request.js")
+},{"STATE":57,"request_btc":37,"request_light":38}],47:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const send_btc = require('send_btc')
+const pending_request = require('pending_request')
+
+module.exports = switch_send
+
+async function switch_send(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+  let showSendBtc = false
+
+  shadow.innerHTML = `
+    <div class="parent-wrapper">
+      <div class="switch-account-container">
+        <div class="account-content"></div>
+      </div>
+    </div>
+    <div class="send-btc hidden"></div>
+    <div class="send-light hidden"></div>
+
+    <style></style>
+  `
+
+  const content = shadow.querySelector('.account-content')
+  const style = shadow.querySelector('style')
+  const send_btc_el = shadow.querySelector('.send-btc')
+  const send_light_el = shadow.querySelector('.send-light')
+
+  const subs = await sdb.watch(onbatch)
+
+  let btc_mounted = false
+  let light_mounted = false
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(p => drive.get(p).then(f => f.raw)))
+      const fn = on[type] || fail
+      await fn(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { btc, lightning } = data[0] || {}
+
+    if (showSendBtc) return
+
+    content.innerHTML = `
+      <div class="account-container btc-container">
+        <div class="btc-icon">${dricons[1] || '₿'} BTC</div>
+        <div class="btc-amount">${btc ? parseFloat(btc).toFixed(4) : '0.0000'}</div>
+      </div>
+
+      <div class="account-container lightning-container">
+        <div class="lightning-icon">${dricons[2] || '⚡'} Lightning</div>
+        <div class="lightning-amount">${lightning ? parseFloat(lightning).toFixed(4) : '0.0000'}</div>
+      </div>
+    `
+    const btc_container = content.querySelector('.btc-container')
+    const lightning_container = content.querySelector('.lightning-container')
+ 
+    btc_container.addEventListener('click', async () => {
+      send_btc_el.classList.remove('hidden')
+
+      if (!btc_mounted) {
+        const send_btc_component = await send_btc(subs[0], {
+          onClose: () => send_btc_el.classList.add('hidden')
+        })
+        send_btc_el.append(send_btc_component)
+        btc_mounted = true
+      }
+    })
+  
+    lightning_container.addEventListener('click', async () => {
+      send_light_el.classList.remove('hidden')
+
+      if (!light_mounted) {
+        const send_light = await pending_request(subs[1], {
+          onClose: () => send_light_el.classList.add('hidden')
+        })
+        send_light_el.append(send_light)
+        light_mounted = true
+      }
+    })
+
+
+  }
+
+  function iconject(data) {
+    dricons = data
+  }
+
+  function fail(data, type) {
+    throw new Error("invalid message", { cause: { data, type } })
+  }
+}
+
+
+
+// ================== fallback ==================
+function fallback_module() {
+  return {
+    api: fallback_instance,
+    _: {
+      'send_btc': { $: '' },
+      'pending_request': { $: '' }
+    }
+  }
+
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const send_btc = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      0: {}
+    }
+
+    const pending_request = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      1: {}
+    }
+
+    return {
+      drive: {
+        'icons/': {
+          'x.svg': { '$ref': 'x.svg' },
+          'btc.svg': { '$ref': 'btc.svg' },
+          'lightning.svg': { '$ref': 'lightning.svg' }
+        },
+        'style/': {
+          'style.css': { '$ref': 'switch_send.css' }
+        },
+        'data/': {
+          'opts.json': { raw: opts || {} }
+        }
+      },
+      _: { send_btc, pending_request }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_send/switch_send.js")
+},{"STATE":57,"pending_request":32,"send_btc":40}],48:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const btc_usd_rate = require('btc_usd_rate')
+
+module.exports = templates
+
+async function templates(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="template-container"></div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.template-container')
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function get_date_label(dateString) {
+    const today = new Date()
+    const target = new Date(dateString)
+
+    const diffInDays = Math.floor(
+      (today.setHours(0, 0, 0, 0) - target.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+    )
+
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+
+  async function ondata(data) {
+    const { date, btc}  = data[0] || {}
+
+    const date_label = get_date_label(date)
+
+    const EXCHANGE_RATE = await btc_usd_rate('btc', 'usd')
+
+    container.innerHTML =
+      `
+      <div class="template-left">
+        <div class="template-title">${date_label}</div>
+      </div>
+      <div class="template-right">
+        <div class="btc-amount">${btc} BTC</div>
+        <div class="usd-amount">~$${(btc * EXCHANGE_RATE).toFixed(2)}</div>
+      </div>
+        
+      `
+  }
+}
+
+function fallback_module() {
+  return {
+    api
+  }
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    
+    return {
+      drive: {
+        'style/': {
+          'style.css': {
+            '$ref': 'templates.css'
+          }
+        },
+        
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/templates/templates.js")
+},{"STATE":57,"btc_usd_rate":7}],49:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+module.exports = total_wealth
+
+const btc_usd_rate = require('btc_usd_rate')
+
+async function total_wealth (opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const {drive} = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+  
+  const el = document.createElement('div')
+  const shadow =  el.attachShadow({ mode: 'closed' })
+
+  let dricons = []
+
+  shadow.innerHTML = `
+    <div class="total-wealth-container">
+      <div class="total-wealth-header">Total wealth</div>
+      <div class="total-wealth-value">
+        <span>₿ 0.0000</span>
+        <div class="total-wealth-usd">= $0</div>
+      </div>
+      <div class="wallet-row">
+        <div class="lightning-icon"></div>
+        Lightning Wallet <span>0.0000</span>
+      </div>
+      <div class="wallet-row">
+        <div class="btc-icon"></div>
+        Bitcoin Wallet <span>0.0000</span>
+      </div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  
+  await sdb.watch(onbatch)
+
+  return el
+
+  function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch){
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+
+  }
+
+  function ondata(data) {
+    renderValues(data[0]?.value || {})
+  }
+  
+
+  async function renderValues({ total = 0, lightning = 0, bitcoin = 0 }) {
+    const rate = await btc_usd_rate('btc', 'usd')
+    const usd = rate * total
+
+    shadow.querySelector('.total-wealth-value span').textContent = `₿ ${total.toFixed(4)}`
+    shadow.querySelector('.total-wealth-usd').textContent = `= $${usd.toLocaleString(undefined, {maximumFractionDigits: 2})}`
+    shadow.querySelectorAll('.wallet-row')[0].querySelector('span').textContent = lightning.toFixed(4)
+    shadow.querySelectorAll('.wallet-row')[1].querySelector('span').textContent = bitcoin.toFixed(4)
+    
+    if (dricons.length) {
+      shadow.querySelector('.btc-icon').innerHTML = dricons[0]  // btc.svg
+      shadow.querySelector('.lightning-icon').innerHTML = dricons[1] // lightning.svg
+    }
+  }
+
+  function iconject (data) {
+    dricons = data
+  }
+}
+
+// ============ Fallback Setup for STATE ============
+
+function fallback_module () {
+  return {
+    api: fallback_instance
+  }
+
+  function fallback_instance (opts ) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    return {
+      drive: {
+        'icons/':{
+          'btc.svg':{
+            '$ref': 'btc.svg'
+          },
+          'lightning.svg':{
+            '$ref': 'lightning.svg'
+          }
+        },
+        'style/': {
+          'total_wealth.css': {
+           '$ref':'total_wealth.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/total_wealth/total_wealth.js")
+},{"STATE":57,"btc_usd_rate":7}],50:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+const transaction_row = require('transaction_row')
+
+module.exports = transaction_history
+
+async function transaction_history(opts = {}, { onClose } = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="transaction-history">
+      <div class="transaction-history-header">
+        <span>Transaction History</span>
+        <button class="history-close">✕</button>
+      </div>
+      <div class="transaction-history-body"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.transaction-history')
+  const body = shadow.querySelector('.transaction-history-body')
+  const closeBtn = shadow.querySelector('.history-close')
+
+  const subs = await sdb.watch(onbatch)
+  console.log ('test')
+
+  // hide overlay on close
+  closeBtn.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  // build grouped list
+  const grouped = {}
+  subs.forEach(sub => {
+    const date = (sub.date || 'Unknown').trim()
+    if (!grouped[date]) grouped[date] = []
+    grouped[date].push(sub)
+  })
+
+  for (const date in grouped) {
+    const dateEl = document.createElement('div')
+    dateEl.className = 'transaction-date'
+    dateEl.textContent = date
+    body.appendChild(dateEl)
+
+    for (const sub of grouped[date]) {
+      const row = await transaction_row(sub)
+      body.appendChild(row)
+    }
+  }
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(p => drive.get(p).then(f => f.raw))
+      )
+      const fn = on[type] || fail
+      await fn(data)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { dateString} = data[0]
+    console.log ("Hello",data[0])
+  }
+}
+
+function fallback_module () {
+  return {
+    api,
+    _: {
+      'transaction_row':{
+        $: ''
+      }
+    } 
+  }
+  function api(opts){
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const transaction_row = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      }
+    }
+    opts.value.forEach((transaction, index) => {
+      transaction_row[index] = transaction
+    })
+    return {
+      drive: {
+        'style/': {
+          'transaction_history.css':{
+            '$ref': 'transaction_history.css'
+          }
+        },
+        'data/': {
+          'opts.json':{
+            raw: opts || {}
+          }
+        }
+      },
+      _:{
+        transaction_row
+      }
+    }
+  }
+}
+
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_history/transaction_history.js")
+},{"STATE":57,"transaction_row":53}],51:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const transaction_row = require('transaction_row')
+const transaction_history = require('transaction_history')
+
+module.exports = transaction_list
+
+async function transaction_list(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = { style: inject, data: ondata }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'open' })
+
+  shadow.innerHTML = `
+    <div class="transaction-list-container">
+      <div class="transaction-list-header">
+        <div class="transaction-list-title">Transactions</div>
+        <div class="transaction-list-see-all">See all</div>
+      </div>
+      <div class="transaction-list-body"></div>
+    </div>
+
+    <div class="transaction-overlay hidden">
+      <div class="transaction-history-body"></div>
+    </div>
+
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const listBody = shadow.querySelector('.transaction-list-body')
+  const seeAllBtn = shadow.querySelector('.transaction-list-see-all')
+  const overlay = shadow.querySelector('.transaction-overlay')
+  const historyBody = shadow.querySelector('.transaction-history-body')
+
+  let historyMounted = false
+
+  const subs = await sdb.watch(onbatch)
+
+  // render small list
+  subs.slice(1, 5).forEach(async sub => {
+    listBody.append(await transaction_row(sub))
+  })
+
+  // open overlay
+  seeAllBtn.addEventListener('click', async () => {
+    overlay.classList.remove('hidden')
+
+    if (!historyMounted) {
+      const history = await transaction_history(subs[0], {
+        onClose: () => overlay.classList.add('hidden')
+      })
+      historyBody.append(history)
+      historyMounted = true
+    }
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(p => drive.get(p).then(f => f.raw))
+      )
+      const fn = on[type] || fail
+      await fn(data)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function ondata() {}
+}
+
+function fallback_module () {
+  return {
+    api,
+    _: {
+      'transaction_history':{ $: ''},
+      'transaction_row':{ $: '' },
+    } 
+  }
+  function api(opts){
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const transaction_history = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      },
+      0: {
+        value:[
+          {
+            dateString: "2025-08-01",
+            tid: "Luis fedrick",
+            ttime: "11:30 AM",
+            tamount: "+ 0.02456",
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3"
+          },
+          {
+            dateString: "2025-08-01",
+            tid: "Mark Kevin",
+            ttime: "03:45 PM",
+            tamount: "- 0.00421",
+            avatar: "https://images.stockcake.com/public/a/1/3/a13b303a-a843-48e3-8c87-c0ac0314a282_large/intense-male-portrait-stockcake.jpg"
+          },
+          {
+            dateString: "2025-07-31",
+            tid: "Luis fedrick",
+            ttime: "11:30 AM",
+            tamount: "+ 0.02456",
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3"
+          },
+          {
+            dateString: "2025-07-28",
+            tid: "Mark Kevin",
+            ttime: "03:45 PM",
+            tamount: "- 0.00421",
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.bdn3Kne-OZLwGM8Uoq5-7gHaHa?w=512&h=512&rs=1&pid=ImgDetMain&o=7&rm=3"
+          },
+          {
+            dateString: "2025-07-28",
+            tid: "Luis fedrick",
+            ttime: "11:30 AM",
+            tamount: "+ 0.02456",
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3"
+          },
+        
+          {
+            dateString: "2025-07-30",
+            tid: "Mark Kevin",
+            ttime: "03:45 PM",
+            tamount: "- 0.00421",
+            avatar: "https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3"
+          },
+        ]
+      }
+    }
+
+
+    const transaction_row = {
+      mapping: {
+        style: 'style',
+        data: 'data'
+      }
+    }
+    opts.value.forEach((transaction, index) => {
+      transaction_row[index] = transaction
+    })
+    return {
+      drive: {
+        'style/': {
+          'transaction_list.css':{
+            '$ref': 'transaction_list.css'
+          }
+        },
+        'data/': {
+          'opts.json':{
+            raw: opts || {}
+          }
+        }
+      },
+      _:{
+        transaction_history,
+        transaction_row
+      }
+    }
+  }
+}
+
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_list/transaction_list.js")
+},{"STATE":57,"transaction_history":50,"transaction_row":53}],52:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const receipt_row = require('receipt_row')
+
+module.exports = transaction_receipt
+
+async function transaction_receipt(opts = {}, {onClose} = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
+
+  let dricons = []
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="receipt-card">
+      <div class="receipt-header">
+        <div class="title-container">
+          <div class="receipt-title">Bitcoin Transaction</div>
+          <div class="btc-icon-small"></div>
+        </div>
+        <div class="close-icon"></div>
+      </div>
+      <div class="receipt-rows"></div>
+      <style></style>
+    </div>
+  `
+
+  const style = shadow.querySelector('style')
+  const rows_el = shadow.querySelector('.receipt-rows')
+
+  const subs = await sdb.watch(onbatch)
+
+  for (let i = 0; i < subs.length; i++) {
+    const row = await receipt_row(subs[i]) 
+    rows_el.append(row)
+  }
+  const close_icon = shadow.querySelector('.close-icon')
+
+  close_icon.addEventListener('click', () => {
+    if (onClose) onClose()
+  })
+
+  return el
+
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  function iconject(data) {
+    dricons = data
+    const btcIcons = shadow.querySelectorAll('.btc-icon-small')
+    const closeIcon = shadow.querySelector('.close-icon')
+
+    btcIcons.forEach(el => el.innerHTML = dricons[0])
+    closeIcon.innerHTML = dricons[1]                  
+  }
+
+  async function ondata(data) {
+    
+  }
+}
+
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'receipt_row': { 
+        $: '' 
+      }
+    }
+  }
+
+ function api(opts = {}) {
+    // Default row when nothing is provided
+    const defaultValue = [
+      { label: "Default Label", value: "Default value" }
+    ]
+
+    // Use defaults if opts.value is missing or not an array
+    const value = Array.isArray(opts.value) && opts.value.length
+      ? opts.value
+      : defaultValue
+
+    const receipt_row = {
+      mapping: {
+        style: 'style',
+        data: 'data',
+        icons: 'icons'
+      }
+    }
+
+    value.forEach((row, index) => {
+      receipt_row[index] = row
+    })
+
+    return {
+      drive: {
+        'icons/': {
+          'btc.svg': { $ref: 'btc.svg' },
+          'x.svg': { $ref: 'x.svg' }
+        },
+        'style/': {
+          'transaction_receipt.css': { $ref: 'transaction_receipt.css' }
+        },
+        'data/': {
+          'opts.json': { raw: { ...opts, value } }
+        }
+      },
+      _: { receipt_row }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_receipt/transaction_receipt.js")
+},{"STATE":57,"receipt_row":34}],53:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const transaction_receipt = require('transaction_receipt')
+
+
+module.exports = transaction_row
+
+async function transaction_row (opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="transaction-row"></div>
+    <div class="tx-overlay hidden">
+      <div class="tx-body"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const row = shadow.querySelector('.transaction-row')
+  const overlay = shadow.querySelector('.tx-overlay')
+  const tx_body = shadow.querySelector('.tx-body')
+
+  const subs = await sdb.watch(onbatch)
+
+  let receipt_mounted = false
+
+  row.addEventListener('click', async () => {
+    overlay.classList.remove('hidden')
+
+    if (!receipt_mounted) {
+      const receipt_view_comp = await transaction_receipt(subs[0], {
+        onClose: () => overlay.classList.add('hidden')
+      })
+      tx_body.append(receipt_view_comp)
+      receipt_mounted = true
+    }
+  })
+
+  return el
+
+  function fail (data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
+
+  async function onbatch (batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject (data) {
+    style.textContent = data[0]
+  }
+
+  function get_date_label (dateString) {
+    const today = new Date()
+    const target = new Date(dateString)
+
+    const diffInDays = Math.floor(
+      (today.setHours(0, 0, 0, 0) - target.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+    )
+
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+  }
+
+  function shorten_tid (tid) {
+    if (tid.length > 14) {
+      return tid.slice(0, 8) + '...' + tid.slice(-4)
+    }
+    return tid
+  }
+
+  function generate_avatar (seed) {
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(seed)}`
+  }
+
+  function is_random_string (str) {
+    if (!str) return true
+    if (/[0-9@#$_-]/.test(str)) return true
+    if (str.length > 12 && !/\s/.test(str)) return true
+
+    const upper = (str.match(/[A-Z]/g) || []).length
+    const lower = (str.match(/[a-z]/g) || []).length
+    if ((upper > 4 && lower > 4) && !/\s/.test(str)) return true
+
+    return false
+  }
+
+  async function ondata (data) {
+    let { avatar, tid, ttime, tamount, dateString } = data[0] || {}
+
+    if (!tid) tid = "No id found"
+
+    if (!avatar) {
+      if (is_random_string(tid)) {
+        avatar = generate_avatar(tid)
+      } else {
+        avatar = 'https://cdn-icons-png.flaticon.com/512/847/847969.png'
+      }
+    }
+
+    const display_tid = shorten_tid(tid)
+    const date_label = get_date_label(dateString || new Date().toISOString())
+
+    row.innerHTML = `
+      <div class="transaction-detail">
+        <div class="transaction-avatar">
+          <img src="${avatar}" alt="avatar" />
+        </div>
+        <div class="transaction-data">
+          <div class="transaction-id">${display_tid}</div>
+          <div class="transaction-time">${ttime || '—'}</div>
+          <div class="transaction-date">${date_label}</div>
+        </div>
+      </div>  
+      <div class="transaction-amount">
+        <span>${tamount || '0'} ₿</span>
+      </div> 
+    `
+  }
+}
+
+function fallback_module () {
+  return {
+    api: fallback_instance,
+    _:{
+      transaction_receipt: { $: '' },
+    }
+  }
+  function fallback_instance(opts = {}) {
+  const defaultReceipt = {
+    value: [
+      { label: "Sent By", value: "Cypher" },
+      { label: "Sent To", value: "Luis fedrick - 1FfmbHfn...455p" },
+      { label: "Time & Date", value: "30 June 2025, 09:32 AM" },
+      { label: "Transaction Fees", value: "0.0001 BTC", convert: true },
+      { label: "Recipient Receives", value: "0.0019 BTC", convert: true },
+      {
+        label: "Blockchain Explorer",
+        value: "https://mempool.space/tx/your_txid_here",
+        link: true
+      },
+      {
+        label: "Total Amount",
+        value: "0.0020 BTC",
+        icon: "btc.svg",
+        convert: true
+      }
+    ]
+  }
+
+  // First-time use → 3 defaults
+  const receipts = Array.isArray(opts.value)
+    ? opts.value
+    : [defaultReceipt]
+
+  const transaction_receipt = {
+    mapping: { style: 'style', data: 'data', icons: 'icons' }
+  }
+
+  receipts.forEach((receipt, index) => {
+    transaction_receipt[index] = receipt
+  })
+
+  return {
+    drive: {
+      'style/': {
+        'style.css': {
+          '$ref': 'transaction_row.css'
+        }
+      },
+      'data/': {
+        'opts.json': {
+          raw: { ...opts, value: receipts }
+        }
+      }
+    },
+    _: {
+      transaction_receipt
+    }
+  }
+}
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_row/transaction_row.js")
+},{"STATE":57,"transaction_receipt":52}],54:[function(require,module,exports){
+//https://github.com/chuckfairy/VanillaQR.js
+//VanillaQR Function constructor
+//pass an object with customizable options
+//url, colorLight, colorDark, width, height
+function VanillaQR ( customize ) {
+
+    var scope = this;
+
+    customize = typeof(customize) === "object" ? customize : {};
+
+    /********************PUBLICS********************/
+
+    scope.revision = 3;
+
+    //canvas output types
+    scope.imageTypes = {
+        "bmp"    : "image/bmp",
+        "gif"    : "image/gif",
+        "jpeg"   : "image/jpeg",
+        "jpg"    : "image/jpg",
+        "png"    : "image/png",
+        "svg+xml": "image/svg+xml",
+        "tiff"   : "image/tiff",
+        "webp"   : "image/webp",
+        "x-icon" : "image/x-icon"
+    };
+
+    //toTable use will default if no canvas support
+    scope.toTable = customize.toTable;
+
+    //qr active domElement
+    scope.domElement = (scope.toTable) ?
+        document.createElement("div"):
+        document.createElement("canvas");
+
+    //QR url
+    scope.url = customize.url || "";
+
+    //Canvas and qr width and height
+    scope.size  = (customize.size  || 280);
+
+    //QR context
+    scope.qrc = false;
+
+    //QR colors
+    scope.colorLight = customize.colorLight || '#fff';
+    scope.colorDark = customize.colorDark || "#000";
+
+    //Correction level
+    scope.ecclevel = customize.ecclevel || 1;
+
+    //Border related
+    scope.noBorder = customize.noBorder;
+    scope.borderSize = customize.borderSize || 4;
+
+
+    /********************PRIVATES********************/
+
+	// Set data values
+	// Working buffers:
+	var strinbuf = [];
+	var eccbuf   = [];
+	var qrframe  = [];
+	var framask  = [];
+	var rlens    = [];
+	var genpoly  = [];
+
+	// Control values - width is based on version, last 4 are from table.
+	var ecclevel;
+	var version;
+	var width;
+	var neccblk1;
+	var neccblk2;
+	var datablkw;
+	var eccblkwid;
+
+
+    /********************QR Creator API********************/
+
+    // set bit to indicate cell in qrframe is immutable
+    var setmask = function ( x, y ) {
+
+        var bt;
+        if (x > y) {
+            bt = x;
+            x = y;
+            y = bt;
+        }
+        // y*y = 1+3+5...
+        bt = y;
+        bt *= y;
+        bt += y;
+        bt >>= 1;
+        bt += x;
+        framask[bt] = 1;
+
+    };
+
+    //black to qrframe, white to mask (later black frame merged to mask)
+    var putalign = function ( x, y ) {
+
+        var j;
+
+        qrframe[x + width * y] = 1;
+        for (j = -2; j < 2; j++) {
+            qrframe[(x + j) + width * (y - 2)] = 1;
+            qrframe[(x - 2) + width * (y + j + 1)] = 1;
+            qrframe[(x + 2) + width * (y + j)] = 1;
+            qrframe[(x + j + 1) + width * (y + 2)] = 1;
+        }
+        for (j = 0; j < 2; j++) {
+            setmask(x - 1, y + j);
+            setmask(x + 1, y - j);
+            setmask(x - j, y - 1);
+            setmask(x + j, y + 1);
+        }
+    }
+
+    //Bit shift modnn
+    var modnn = function(x) {
+
+        while (x >= 255) {
+            x -= 255;
+            x = (x >> 8) + (x & 255);
+        }
+
+        return x;
+
+    };
+
+    // Calculate and append ECC data to data block.  Block is in strinbuf, indexes to buffers given.
+    var appendrs = function ( data, dlen, ecbuf, eclen ) {
+
+        var i, j, fb;
+        var gexp = VanillaQR.gexp;
+        var glog = VanillaQR.glog;
+
+        for (i = 0; i < eclen; i++)
+            strinbuf[ecbuf + i] = 0;
+        for (i = 0; i < dlen; i++) {
+            fb = glog[strinbuf[data + i] ^ strinbuf[ecbuf]];
+            if (fb != 255)     /* fb term is non-zero */
+                for (j = 1; j < eclen; j++)
+                    strinbuf[ecbuf + j - 1] = strinbuf[ecbuf + j] ^ gexp[modnn(fb + genpoly[eclen - j])];
+            else
+                for( j = ecbuf ; j < ecbuf + eclen; j++ )
+                    strinbuf[j] = strinbuf[j + 1];
+            strinbuf[ ecbuf + eclen - 1] = fb == 255 ? 0 : gexp[modnn(fb + genpoly[0])];
+        }
+
+    };
+
+    // check mask - since symmetrical use half.
+    var ismasked = function(x, y) {
+
+        var bt;
+        if (x > y) {
+            bt = x;
+            x = y;
+            y = bt;
+        }
+        bt = y;
+        bt += y * y;
+        bt >>= 1;
+        bt += x;
+        return framask[bt];
+
+    };
+
+    //  Apply the selected mask out of the 8.
+    var applymask = function(m) {
+
+        var x, y, r3x, r3y;
+
+        switch (m) {
+        case 0:
+            for (y = 0; y < width; y++)
+                for (x = 0; x < width; x++)
+                    if (!((x + y) & 1) && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+            break;
+        case 1:
+            for (y = 0; y < width; y++)
+                for (x = 0; x < width; x++)
+                    if (!(y & 1) && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+            break;
+        case 2:
+            for (y = 0; y < width; y++)
+                for (r3x = 0, x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3)
+                        r3x = 0;
+                    if (!r3x && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            break;
+        case 3:
+            for (r3y = 0, y = 0; y < width; y++, r3y++) {
+                if (r3y == 3)
+                    r3y = 0;
+                for (r3x = r3y, x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3)
+                        r3x = 0;
+                    if (!r3x && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            }
+            break;
+        case 4:
+            for (y = 0; y < width; y++)
+                for (r3x = 0, r3y = ((y >> 1) & 1), x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3) {
+                        r3x = 0;
+                        r3y = !r3y;
+                    }
+                    if (!r3y && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            break;
+        case 5:
+            for (r3y = 0, y = 0; y < width; y++, r3y++) {
+                if (r3y == 3)
+                    r3y = 0;
+                for (r3x = 0, x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3)
+                        r3x = 0;
+                    if (!((x & y & 1) + !(!r3x | !r3y)) && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            }
+            break;
+        case 6:
+            for (r3y = 0, y = 0; y < width; y++, r3y++) {
+                if (r3y == 3)
+                    r3y = 0;
+                for (r3x = 0, x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3)
+                        r3x = 0;
+                    if (!(((x & y & 1) + (r3x && (r3x == r3y))) & 1) && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            }
+            break;
+        case 7:
+            for (r3y = 0, y = 0; y < width; y++, r3y++) {
+                if (r3y == 3)
+                    r3y = 0;
+                for (r3x = 0, x = 0; x < width; x++, r3x++) {
+                    if (r3x == 3)
+                        r3x = 0;
+                    if (!(((r3x && (r3x == r3y)) + ((x + y) & 1)) & 1) && !ismasked(x, y))
+                        qrframe[x + y * width] ^= 1;
+                }
+            }
+            break;
+        }
+
+    };
+
+    // Using the table of the length of each run, calculate the amount of bad image
+    // - long runs or those that look like finders; called twice, once each for X and Y
+    var badruns = function(length) {
+
+        var i;
+        var runsbad = 0;
+        for (i = 0; i <= length; i++)
+            if (rlens[i] >= 5)
+                runsbad += VanillaQR.N1 + rlens[i] - 5;
+        // BwBBBwB as in finder
+        for (i = 3; i < length - 1; i += 2)
+            if (rlens[i - 2] == rlens[i + 2]
+                && rlens[i + 2] == rlens[i - 1]
+                && rlens[i - 1] == rlens[i + 1]
+                && rlens[i - 1] * 3 == rlens[i]
+                // white around the black pattern? Not part of spec
+                && (rlens[i - 3] == 0 // beginning
+                    || i + 3 > length  // end
+                    || rlens[i - 3] * 3 >= rlens[i] * 4 || rlens[i + 3] * 3 >= rlens[i] * 4)
+               )
+                runsbad += VanillaQR.N3;
+        return runsbad;
+
+    };
+
+    // Calculate how bad the masked image is - blocks, imbalance, runs, or finders.
+    var badcheck = function() {
+
+        var x, y, h, b, b1;
+        var thisbad = 0;
+        var bw = 0;
+
+        // blocks of same color.
+        for (y = 0; y < width - 1; y++) {
+            for (x = 0; x < width - 1; x++) {
+                if ((qrframe[x + width * y] && qrframe[(x + 1) + width * y]
+                     && qrframe[x + width * (y + 1)] && qrframe[(x + 1) + width * (y + 1)]) // all black
+                    || !(qrframe[x + width * y] || qrframe[(x + 1) + width * y]
+                         || qrframe[x + width * (y + 1)] || qrframe[(x + 1) + width * (y + 1)])) // all white
+                    thisbad += VanillaQR.N2;
+            }
+        }
+
+        // X runs
+        for (y = 0; y < width; y++) {
+            rlens[0] = 0;
+            for (h = b = x = 0; x < width; x++) {
+                if ((b1 = qrframe[x + width * y]) == b)
+                    rlens[h]++;
+                else
+                    rlens[++h] = 1;
+                b = b1;
+                bw += b ? 1 : -1;
+            }
+
+            thisbad += badruns(h);
+
+        }
+
+        // black/white imbalance
+        if (bw < 0)
+            bw = -bw;
+
+        var big = bw;
+        var count = 0;
+        big += big << 2;
+        big <<= 1;
+        while (big > width * width)
+            big -= width * width, count++;
+        thisbad += count * VanillaQR.N4;
+
+        // Y runs
+        for (x = 0; x < width; x++) {
+            rlens[0] = 0;
+            for (h = b = y = 0; y < width; y++) {
+                if ((b1 = qrframe[x + width * y]) == b)
+                    rlens[h]++;
+                else
+                    rlens[++h] = 1;
+                b = b1;
+            }
+            thisbad += badruns(h);
+        }
+
+        return thisbad;
+
+    };
+
+    //Generate QR frame array
+    scope.genframe = function(instring) {
+
+        var eccblocks = VanillaQR.eccblocks;
+        var gexp = VanillaQR.gexp;
+        var glog = VanillaQR.glog;
+
+        var x, y, k, t, v, i, j, m;
+
+    // find the smallest version that fits the string
+        t = instring.length;
+        version = 0;
+        do {
+            version++;
+            k = (ecclevel - 1) * 4 + (version - 1) * 16;
+            neccblk1 = eccblocks[k++];
+            neccblk2 = eccblocks[k++];
+            datablkw = eccblocks[k++];
+            eccblkwid = eccblocks[k];
+            k = datablkw * (neccblk1 + neccblk2) + neccblk2 - 3 + (version <= 9);
+            if (t <= k)
+                break;
+        } while (version < 40);
+
+    // FIXME - insure that it fits insted of being truncated
+        width = 17 + 4 * version;
+
+    // allocate, clear and setup data structures
+        v = datablkw + (datablkw + eccblkwid) * (neccblk1 + neccblk2) + neccblk2;
+        for( t = 0; t < v; t++ )
+            eccbuf[t] = 0;
+        strinbuf = instring.slice(0);
+
+        for( t = 0; t < width * width; t++ )
+            qrframe[t] = 0;
+
+        for( t = 0 ; t < (width * (width + 1) + 1) / 2; t++)
+            framask[t] = 0;
+
+    // insert finders - black to frame, white to mask
+
+        for (t = 0; t < 3; t++) {
+            k = 0;
+            y = 0;
+            if (t == 1)
+                k = (width - 7);
+            if (t == 2)
+                y = (width - 7);
+            qrframe[(y + 3) + width * (k + 3)] = 1;
+            for (x = 0; x < 6; x++) {
+                qrframe[(y + x) + width * k] = 1;
+                qrframe[y + width * (k + x + 1)] = 1;
+                qrframe[(y + 6) + width * (k + x)] = 1;
+                qrframe[(y + x + 1) + width * (k + 6)] = 1;
+            }
+            for (x = 1; x < 5; x++) {
+                setmask(y + x, k + 1);
+                setmask(y + 1, k + x + 1);
+                setmask(y + 5, k + x);
+                setmask(y + x + 1, k + 5);
+            }
+            for (x = 2; x < 4; x++) {
+                qrframe[(y + x) + width * (k + 2)] = 1;
+                qrframe[(y + 2) + width * (k + x + 1)] = 1;
+                qrframe[(y + 4) + width * (k + x)] = 1;
+                qrframe[(y + x + 1) + width * (k + 4)] = 1;
+            }
+        }
+
+    // alignment blocks
+        if (version > 1) {
+
+            t = VanillaQR.adelta[version];
+            y = width - 7;
+            for (;;) {
+                x = width - 7;
+                while (x > t - 3) {
+                    putalign(x, y);
+                    if (x < t)
+                        break;
+                    x -= t;
+                }
+                if (y <= t + 9)
+                    break;
+                y -= t;
+                putalign(6, y);
+                putalign(y, 6);
+            }
+        }
+
+    // single black
+        qrframe[8 + width * (width - 8)] = 1;
+
+    // timing gap - mask only
+        for (y = 0; y < 7; y++) {
+            setmask(7, y);
+            setmask(width - 8, y);
+            setmask(7, y + width - 7);
+        }
+        for (x = 0; x < 8; x++) {
+            setmask(x, 7);
+            setmask(x + width - 8, 7);
+            setmask(x, width - 8);
+        }
+
+    // reserve mask-format area
+        for (x = 0; x < 9; x++)
+            setmask(x, 8);
+        for (x = 0; x < 8; x++) {
+            setmask(x + width - 8, 8);
+            setmask(8, x);
+        }
+        for (y = 0; y < 7; y++)
+            setmask(8, y + width - 7);
+
+    // timing row/col
+        for (x = 0; x < width - 14; x++)
+            if (x & 1) {
+                setmask(8 + x, 6);
+                setmask(6, 8 + x);
+            }
+            else {
+                qrframe[(8 + x) + width * 6] = 1;
+                qrframe[6 + width * (8 + x)] = 1;
+            }
+
+    // version block
+        if (version > 6) {
+            t = VanillaQR.vpat[version - 7];
+            k = 17;
+            for (x = 0; x < 6; x++)
+                for (y = 0; y < 3; y++, k--)
+                    if (1 & (k > 11 ? version >> (k - 12) : t >> k)) {
+                        qrframe[(5 - x) + width * (2 - y + width - 11)] = 1;
+                        qrframe[(2 - y + width - 11) + width * (5 - x)] = 1;
+                    }
+            else {
+                setmask(5 - x, 2 - y + width - 11);
+                setmask(2 - y + width - 11, 5 - x);
+            }
+        }
+
+    // sync mask bits - only set above for white spaces, so add in black bits
+        for (y = 0; y < width; y++)
+            for (x = 0; x <= y; x++)
+                if (qrframe[x + width * y])
+                    setmask(x, y);
+
+    // convert string to bitstream
+    // 8 bit data to QR-coded 8 bit data (numeric or alphanum, or kanji not supported)
+        v = strinbuf.length;
+
+    // string to array
+        for( i = 0 ; i < v; i++ )
+            eccbuf[i] = strinbuf.charCodeAt(i);
+        strinbuf = eccbuf.slice(0);
+
+    // calculate max string length
+        x = datablkw * (neccblk1 + neccblk2) + neccblk2;
+        if (v >= x - 2) {
+            v = x - 2;
+            if (version > 9)
+                v--;
+        }
+
+    // shift and repack to insert length prefix
+        i = v;
+        if (version > 9) {
+            strinbuf[i + 2] = 0;
+            strinbuf[i + 3] = 0;
+            while (i--) {
+                t = strinbuf[i];
+                strinbuf[i + 3] |= 255 & (t << 4);
+                strinbuf[i + 2] = t >> 4;
+            }
+            strinbuf[2] |= 255 & (v << 4);
+            strinbuf[1] = v >> 4;
+            strinbuf[0] = 0x40 | (v >> 12);
+        }
+        else {
+            strinbuf[i + 1] = 0;
+            strinbuf[i + 2] = 0;
+            while (i--) {
+                t = strinbuf[i];
+                strinbuf[i + 2] |= 255 & (t << 4);
+                strinbuf[i + 1] = t >> 4;
+            }
+            strinbuf[1] |= 255 & (v << 4);
+            strinbuf[0] = 0x40 | (v >> 4);
+        }
+    // fill to end with pad pattern
+        i = v + 3 - (version < 10);
+        while (i < x) {
+            strinbuf[i++] = 0xec;
+            // buffer has room    if (i == x)      break;
+            strinbuf[i++] = 0x11;
+        }
+
+    // calculate and append ECC
+
+    // calculate generator polynomial
+
+
+        genpoly[0] = 1;
+        for (i = 0; i < eccblkwid; i++) {
+            genpoly[i + 1] = 1;
+            for (j = i; j > 0; j--)
+                genpoly[j] = genpoly[j]
+                ? genpoly[j - 1] ^ gexp[modnn(glog[genpoly[j]] + i)] : genpoly[j - 1];
+            genpoly[0] = gexp[modnn(glog[genpoly[0]] + i)];
+        }
+        for (i = 0; i <= eccblkwid; i++)
+            genpoly[i] = glog[genpoly[i]]; // use logs for genpoly[] to save calc step
+
+    // append ecc to data buffer
+        k = x;
+        y = 0;
+        for (i = 0; i < neccblk1; i++) {
+            appendrs(y, datablkw, k, eccblkwid);
+            y += datablkw;
+            k += eccblkwid;
+        }
+        for (i = 0; i < neccblk2; i++) {
+            appendrs(y, datablkw + 1, k, eccblkwid);
+            y += datablkw + 1;
+            k += eccblkwid;
+        }
+
+    // interleave blocks
+        y = 0;
+        for (i = 0; i < datablkw; i++) {
+            for (j = 0; j < neccblk1; j++)
+                eccbuf[y++] = strinbuf[i + j * datablkw];
+            for (j = 0; j < neccblk2; j++)
+                eccbuf[y++] = strinbuf[(neccblk1 * datablkw) + i + (j * (datablkw + 1))];
+        }
+        for (j = 0; j < neccblk2; j++)
+            eccbuf[y++] = strinbuf[(neccblk1 * datablkw) + i + (j * (datablkw + 1))];
+        for (i = 0; i < eccblkwid; i++)
+            for (j = 0; j < neccblk1 + neccblk2; j++)
+                eccbuf[y++] = strinbuf[x + i + j * eccblkwid];
+        strinbuf = eccbuf;
+
+    // pack bits into frame avoiding masked area.
+        x = y = width - 1;
+        k = v = 1;         // up, minus
+        /* inteleaved data and ecc codes */
+        m = (datablkw + eccblkwid) * (neccblk1 + neccblk2) + neccblk2;
+        for (i = 0; i < m; i++) {
+            t = strinbuf[i];
+            for (j = 0; j < 8; j++, t <<= 1) {
+                if (0x80 & t)
+                    qrframe[x + width * y] = 1;
+                do {        // find next fill position
+                    if (v)
+                        x--;
+                    else {
+                        x++;
+                        if (k) {
+                            if (y != 0)
+                                y--;
+                            else {
+                                x -= 2;
+                                k = !k;
+                                if (x == 6) {
+                                    x--;
+                                    y = 9;
+                                }
+                            }
+                        }
+                        else {
+                            if (y != width - 1)
+                                y++;
+                            else {
+                                x -= 2;
+                                k = !k;
+                                if (x == 6) {
+                                    x--;
+                                    y -= 8;
+                                }
+                            }
+                        }
+                    }
+                    v = !v;
+                } while (ismasked(x, y));
+            }
+        }
+
+    // save pre-mask copy of frame
+        strinbuf = qrframe.slice(0);
+        t = 0;           // best
+        y = 30000;         // demerit
+    // for instead of while since in original arduino code
+    // if an early mask was "good enough" it wouldn't try for a better one
+    // since they get more complex and take longer.
+        for (k = 0; k < 8; k++) {
+
+            // returns black-white imbalance
+            applymask(k);
+            x = badcheck();
+
+            if (x < y) { // current mask better than previous best?
+                y = x;
+                t = k;
+            }
+            if (t == 7)
+                break;       // don't increment i to a void redoing mask
+            qrframe = strinbuf.slice(0); // reset for next pass
+        }
+        if (t != k)         // redo best mask - none good enough, last wasn't t
+            applymask(t);
+
+    // add in final mask/ecclevel bytes
+        y = VanillaQR.fmtword[t + ((ecclevel - 1) << 3)];
+        // low byte
+        for (k = 0; k < 8; k++, y >>= 1)
+            if (y & 1) {
+                qrframe[(width - 1 - k) + width * 8] = 1;
+                if (k < 6)
+                    qrframe[8 + width * k] = 1;
+                else
+                    qrframe[8 + width * (k + 1)] = 1;
+            }
+        // high byte
+        for (k = 0; k < 7; k++, y >>= 1)
+            if (y & 1) {
+                qrframe[8 + width * (width - 7 + k)] = 1;
+                if (k)
+                    qrframe[(6 - k) + width * 8] = 1;
+                else
+                    qrframe[7 + width * 8] = 1;
+            }
+
+    // return image
+        return qrframe;
+    };
+
+    //Initialize QR Code
+    scope.init = function() {
+
+        ecclevel = scope.ecclevel;
+        var qf = scope.genframe(scope.url);
+
+        if(scope.toTable) {
+
+            scope.tableWrite(qf, width);
+
+        } else {
+
+            scope.canvasWrite(qf, width);
+
+        }
+
+    };
+
+    //Auto initialize
+    scope.init();
+
+}
+
+//Get canvas 2D Context
+VanillaQR.prototype = {
+
+    //Canvas create
+    canvasWrite: function(qf, width) {
+
+        var scope = this;
+
+        //Get context and proceed if it is allowed
+        if(!scope.qrc) {
+
+            scope.qrc = scope.getContext(scope.domElement);
+
+            //No canvas support default to Table
+            if(!scope.qrc) {
+                scope.toTable = true;
+                scope.domElement = document.createElement("div");
+                scope.tableWrite(qf, width);
+                return;
+            }
+
+        }
+
+        //Setup canvas context
+        var size = scope.size;
+        var qrc = scope.qrc;
+
+        qrc.lineWidth=1;
+
+        var px = size;
+        px /= width + 10;
+        px=Math.round(px - 0.5);
+
+        var offset = 4;
+
+        if (scope.noBorder) {
+            qrc.canvas.width = qrc.canvas.height = px * width;
+            offset = 0;
+        }
+        else {
+            qrc.canvas.width = qrc.canvas.height = size;
+        }
+
+        //Fill canvas with set colors
+        qrc.clearRect( 0, 0, size, size );
+        qrc.fillStyle = scope.colorLight;
+        qrc.fillRect(0, 0, px*(width+8), px*(width+8));
+        qrc.fillStyle = scope.colorDark;
+
+        //Write boxes per row
+        for( var i = 0; i < width; i++ ) {
+
+            for( var j = 0; j < width; j++ ) {
+                if( qf[j*width+i] ) {
+                    qrc.fillRect(px*(offset+i),px*(offset+j),px,px);
+                }
+             }
+
+         }
+
+    },
+
+    //Table write qr code
+    tableWrite: function(qf, width) {
+
+        var scope = this;
+
+        //Table style
+        var collapseStyle = "border:0;border-collapse:collapse;";
+        var tdWidth = Math.round((this.size / width) - 3.5) + "px";
+        var borderWidth = width + ( ( scope.noBorder ) ? 0 : ( scope.borderSize * 2 ) );
+        var sideBorderWidth = scope.borderSize;
+        var tdStyle = "width:" + tdWidth + ";height:" + tdWidth + ";";
+
+        var colorLight = scope.colorLight;
+        var colorDark = scope.colorDark;
+
+        //Table elements
+        var table = document.createElement("table");
+        table.style.cssText = collapseStyle;
+
+        var tr = document.createElement("tr");
+        var td = document.createElement("td");
+
+        //Cloning and creating table Elements
+        var cloneTD = function() { return td.cloneNode(); };
+
+        var createTDDark = function() {
+            var elem = cloneTD();
+            elem.style.cssText = tdStyle + "background:" + colorDark;
+            return elem;
+        };
+
+        var createTDLight = function() {
+            var elem = cloneTD();
+            elem.style.cssText = tdStyle + "background:" + colorLight;
+            return elem;
+        }
+
+
+        //Regular borders appending
+        var appendBorders = function( table ) {
+
+            var insertNode = table.firstChild;
+
+            for( var i = 0; i < scope.borderSize; i ++ ) {
+
+                var row = tr.cloneNode();
+
+                for( var t = 0; t < borderWidth; t++ ) {
+                    var lightTD = createTDLight();
+                    row.appendChild(lightTD);
+                }
+
+                table.appendChild( row );
+                table.insertBefore( row.cloneNode( true ), insertNode );
+
+            }
+
+        }
+
+
+        //Create side border
+        var appendSideBorders = function( row ) {
+
+            var insertNode = row.firstChild;
+
+            for( var i = 0; i < sideBorderWidth; i ++ ) {
+
+                row.insertBefore( createTDLight(), insertNode );
+
+                row.appendChild(createTDLight());
+
+            }
+
+        };
+
+        //Write boxes per row
+        for( var i = 0; i < width; i++ ) {
+
+            var currentRow = tr.cloneNode();
+            table.appendChild(currentRow);
+
+            for( var j = 0; j < width; j++ ) {
+
+                //Is a dark color
+                if( qf[ (i*width) + j ] === 1 ) {
+                    var darkTd = createTDDark();
+                    currentRow.appendChild(darkTd);
+                }
+
+                //Light color
+                else {
+                    var lightTD = createTDLight();
+                    currentRow.appendChild(lightTD);
+                }
+
+            }
+
+            if( !scope.noBorder ) {
+
+                appendSideBorders(currentRow);
+
+            }
+
+        }
+
+        if( !scope.noBorder ) {
+
+            appendBorders( table );
+
+        }
+
+         scope.domElement.innerHTML = "";
+         scope.domElement.appendChild(table);
+
+    },
+
+    //get domElement 2D  Context
+    getContext: function(domElement) {
+
+        //try to get 2d context error
+        if(!(domElement.getContext && domElement.getContext('2d'))) {
+
+            console.log("Browser does not have 2d Canvas support");
+            return false;
+
+        }
+
+        return domElement.getContext('2d');
+
+    },
+
+    //QR frame to image type
+    toImage: function(type) {
+
+        if(!this.qrc) {return;}
+
+        //Check image output type
+        var dataType = this.imageTypes[type];
+        if(!dataType) {
+            throw new Error(type + " is not a valid image type ");
+        }
+
+        //create image with src of QR code
+    	var image = new Image;
+    	image.src = this.domElement.toDataURL(dataType);
+    	return image;
+
+    }
+
+};
+
+
+// Private variables
+// alignment pattern
+VanillaQR.adelta = [
+  0, 11, 15, 19, 23, 27, 31, // force 1 pat
+  16, 18, 20, 22, 24, 26, 28, 20, 22, 24, 24, 26, 28, 28, 22, 24, 24,
+  26, 26, 28, 28, 24, 24, 26, 26, 26, 28, 28, 24, 26, 26, 26, 28, 28
+];
+
+// version block
+VanillaQR.vpat = [
+    0xc94, 0x5bc, 0xa99, 0x4d3, 0xbf6, 0x762, 0x847, 0x60d,
+    0x928, 0xb78, 0x45d, 0xa17, 0x532, 0x9a6, 0x683, 0x8c9,
+    0x7ec, 0xec4, 0x1e1, 0xfab, 0x08e, 0xc1a, 0x33f, 0xd75,
+    0x250, 0x9d5, 0x6f0, 0x8ba, 0x79f, 0xb0b, 0x42e, 0xa64,
+    0x541, 0xc69
+];
+
+// final format bits with mask: level << 3 | mask
+VanillaQR.fmtword = [
+    0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976,    //L
+    0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0,    //M
+    0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed,    //Q
+    0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b    //H
+];
+
+// 4 per version: number of blocks 1,2; data width; ecc width
+VanillaQR.eccblocks = [
+    1, 0, 19, 7, 1, 0, 16, 10, 1, 0, 13, 13, 1, 0, 9, 17,
+    1, 0, 34, 10, 1, 0, 28, 16, 1, 0, 22, 22, 1, 0, 16, 28,
+    1, 0, 55, 15, 1, 0, 44, 26, 2, 0, 17, 18, 2, 0, 13, 22,
+    1, 0, 80, 20, 2, 0, 32, 18, 2, 0, 24, 26, 4, 0, 9, 16,
+    1, 0, 108, 26, 2, 0, 43, 24, 2, 2, 15, 18, 2, 2, 11, 22,
+    2, 0, 68, 18, 4, 0, 27, 16, 4, 0, 19, 24, 4, 0, 15, 28,
+    2, 0, 78, 20, 4, 0, 31, 18, 2, 4, 14, 18, 4, 1, 13, 26,
+    2, 0, 97, 24, 2, 2, 38, 22, 4, 2, 18, 22, 4, 2, 14, 26,
+    2, 0, 116, 30, 3, 2, 36, 22, 4, 4, 16, 20, 4, 4, 12, 24,
+    2, 2, 68, 18, 4, 1, 43, 26, 6, 2, 19, 24, 6, 2, 15, 28,
+    4, 0, 81, 20, 1, 4, 50, 30, 4, 4, 22, 28, 3, 8, 12, 24,
+    2, 2, 92, 24, 6, 2, 36, 22, 4, 6, 20, 26, 7, 4, 14, 28,
+    4, 0, 107, 26, 8, 1, 37, 22, 8, 4, 20, 24, 12, 4, 11, 22,
+    3, 1, 115, 30, 4, 5, 40, 24, 11, 5, 16, 20, 11, 5, 12, 24,
+    5, 1, 87, 22, 5, 5, 41, 24, 5, 7, 24, 30, 11, 7, 12, 24,
+    5, 1, 98, 24, 7, 3, 45, 28, 15, 2, 19, 24, 3, 13, 15, 30,
+    1, 5, 107, 28, 10, 1, 46, 28, 1, 15, 22, 28, 2, 17, 14, 28,
+    5, 1, 120, 30, 9, 4, 43, 26, 17, 1, 22, 28, 2, 19, 14, 28,
+    3, 4, 113, 28, 3, 11, 44, 26, 17, 4, 21, 26, 9, 16, 13, 26,
+    3, 5, 107, 28, 3, 13, 41, 26, 15, 5, 24, 30, 15, 10, 15, 28,
+    4, 4, 116, 28, 17, 0, 42, 26, 17, 6, 22, 28, 19, 6, 16, 30,
+    2, 7, 111, 28, 17, 0, 46, 28, 7, 16, 24, 30, 34, 0, 13, 24,
+    4, 5, 121, 30, 4, 14, 47, 28, 11, 14, 24, 30, 16, 14, 15, 30,
+    6, 4, 117, 30, 6, 14, 45, 28, 11, 16, 24, 30, 30, 2, 16, 30,
+    8, 4, 106, 26, 8, 13, 47, 28, 7, 22, 24, 30, 22, 13, 15, 30,
+    10, 2, 114, 28, 19, 4, 46, 28, 28, 6, 22, 28, 33, 4, 16, 30,
+    8, 4, 122, 30, 22, 3, 45, 28, 8, 26, 23, 30, 12, 28, 15, 30,
+    3, 10, 117, 30, 3, 23, 45, 28, 4, 31, 24, 30, 11, 31, 15, 30,
+    7, 7, 116, 30, 21, 7, 45, 28, 1, 37, 23, 30, 19, 26, 15, 30,
+    5, 10, 115, 30, 19, 10, 47, 28, 15, 25, 24, 30, 23, 25, 15, 30,
+    13, 3, 115, 30, 2, 29, 46, 28, 42, 1, 24, 30, 23, 28, 15, 30,
+    17, 0, 115, 30, 10, 23, 46, 28, 10, 35, 24, 30, 19, 35, 15, 30,
+    17, 1, 115, 30, 14, 21, 46, 28, 29, 19, 24, 30, 11, 46, 15, 30,
+    13, 6, 115, 30, 14, 23, 46, 28, 44, 7, 24, 30, 59, 1, 16, 30,
+    12, 7, 121, 30, 12, 26, 47, 28, 39, 14, 24, 30, 22, 41, 15, 30,
+    6, 14, 121, 30, 6, 34, 47, 28, 46, 10, 24, 30, 2, 64, 15, 30,
+    17, 4, 122, 30, 29, 14, 46, 28, 49, 10, 24, 30, 24, 46, 15, 30,
+    4, 18, 122, 30, 13, 32, 46, 28, 48, 14, 24, 30, 42, 32, 15, 30,
+    20, 4, 117, 30, 40, 7, 47, 28, 43, 22, 24, 30, 10, 67, 15, 30,
+    19, 6, 118, 30, 18, 31, 47, 28, 34, 34, 24, 30, 20, 61, 15, 30
+];
+
+// Galois field log table
+VanillaQR.glog = [
+    0xff, 0x00, 0x01, 0x19, 0x02, 0x32, 0x1a, 0xc6, 0x03, 0xdf, 0x33, 0xee, 0x1b, 0x68, 0xc7, 0x4b,
+    0x04, 0x64, 0xe0, 0x0e, 0x34, 0x8d, 0xef, 0x81, 0x1c, 0xc1, 0x69, 0xf8, 0xc8, 0x08, 0x4c, 0x71,
+    0x05, 0x8a, 0x65, 0x2f, 0xe1, 0x24, 0x0f, 0x21, 0x35, 0x93, 0x8e, 0xda, 0xf0, 0x12, 0x82, 0x45,
+    0x1d, 0xb5, 0xc2, 0x7d, 0x6a, 0x27, 0xf9, 0xb9, 0xc9, 0x9a, 0x09, 0x78, 0x4d, 0xe4, 0x72, 0xa6,
+    0x06, 0xbf, 0x8b, 0x62, 0x66, 0xdd, 0x30, 0xfd, 0xe2, 0x98, 0x25, 0xb3, 0x10, 0x91, 0x22, 0x88,
+    0x36, 0xd0, 0x94, 0xce, 0x8f, 0x96, 0xdb, 0xbd, 0xf1, 0xd2, 0x13, 0x5c, 0x83, 0x38, 0x46, 0x40,
+    0x1e, 0x42, 0xb6, 0xa3, 0xc3, 0x48, 0x7e, 0x6e, 0x6b, 0x3a, 0x28, 0x54, 0xfa, 0x85, 0xba, 0x3d,
+    0xca, 0x5e, 0x9b, 0x9f, 0x0a, 0x15, 0x79, 0x2b, 0x4e, 0xd4, 0xe5, 0xac, 0x73, 0xf3, 0xa7, 0x57,
+    0x07, 0x70, 0xc0, 0xf7, 0x8c, 0x80, 0x63, 0x0d, 0x67, 0x4a, 0xde, 0xed, 0x31, 0xc5, 0xfe, 0x18,
+    0xe3, 0xa5, 0x99, 0x77, 0x26, 0xb8, 0xb4, 0x7c, 0x11, 0x44, 0x92, 0xd9, 0x23, 0x20, 0x89, 0x2e,
+    0x37, 0x3f, 0xd1, 0x5b, 0x95, 0xbc, 0xcf, 0xcd, 0x90, 0x87, 0x97, 0xb2, 0xdc, 0xfc, 0xbe, 0x61,
+    0xf2, 0x56, 0xd3, 0xab, 0x14, 0x2a, 0x5d, 0x9e, 0x84, 0x3c, 0x39, 0x53, 0x47, 0x6d, 0x41, 0xa2,
+    0x1f, 0x2d, 0x43, 0xd8, 0xb7, 0x7b, 0xa4, 0x76, 0xc4, 0x17, 0x49, 0xec, 0x7f, 0x0c, 0x6f, 0xf6,
+    0x6c, 0xa1, 0x3b, 0x52, 0x29, 0x9d, 0x55, 0xaa, 0xfb, 0x60, 0x86, 0xb1, 0xbb, 0xcc, 0x3e, 0x5a,
+    0xcb, 0x59, 0x5f, 0xb0, 0x9c, 0xa9, 0xa0, 0x51, 0x0b, 0xf5, 0x16, 0xeb, 0x7a, 0x75, 0x2c, 0xd7,
+    0x4f, 0xae, 0xd5, 0xe9, 0xe6, 0xe7, 0xad, 0xe8, 0x74, 0xd6, 0xf4, 0xea, 0xa8, 0x50, 0x58, 0xaf
+];
+
+// Galios field exponent table
+VanillaQR.gexp = [
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1d, 0x3a, 0x74, 0xe8, 0xcd, 0x87, 0x13, 0x26,
+    0x4c, 0x98, 0x2d, 0x5a, 0xb4, 0x75, 0xea, 0xc9, 0x8f, 0x03, 0x06, 0x0c, 0x18, 0x30, 0x60, 0xc0,
+    0x9d, 0x27, 0x4e, 0x9c, 0x25, 0x4a, 0x94, 0x35, 0x6a, 0xd4, 0xb5, 0x77, 0xee, 0xc1, 0x9f, 0x23,
+    0x46, 0x8c, 0x05, 0x0a, 0x14, 0x28, 0x50, 0xa0, 0x5d, 0xba, 0x69, 0xd2, 0xb9, 0x6f, 0xde, 0xa1,
+    0x5f, 0xbe, 0x61, 0xc2, 0x99, 0x2f, 0x5e, 0xbc, 0x65, 0xca, 0x89, 0x0f, 0x1e, 0x3c, 0x78, 0xf0,
+    0xfd, 0xe7, 0xd3, 0xbb, 0x6b, 0xd6, 0xb1, 0x7f, 0xfe, 0xe1, 0xdf, 0xa3, 0x5b, 0xb6, 0x71, 0xe2,
+    0xd9, 0xaf, 0x43, 0x86, 0x11, 0x22, 0x44, 0x88, 0x0d, 0x1a, 0x34, 0x68, 0xd0, 0xbd, 0x67, 0xce,
+    0x81, 0x1f, 0x3e, 0x7c, 0xf8, 0xed, 0xc7, 0x93, 0x3b, 0x76, 0xec, 0xc5, 0x97, 0x33, 0x66, 0xcc,
+    0x85, 0x17, 0x2e, 0x5c, 0xb8, 0x6d, 0xda, 0xa9, 0x4f, 0x9e, 0x21, 0x42, 0x84, 0x15, 0x2a, 0x54,
+    0xa8, 0x4d, 0x9a, 0x29, 0x52, 0xa4, 0x55, 0xaa, 0x49, 0x92, 0x39, 0x72, 0xe4, 0xd5, 0xb7, 0x73,
+    0xe6, 0xd1, 0xbf, 0x63, 0xc6, 0x91, 0x3f, 0x7e, 0xfc, 0xe5, 0xd7, 0xb3, 0x7b, 0xf6, 0xf1, 0xff,
+    0xe3, 0xdb, 0xab, 0x4b, 0x96, 0x31, 0x62, 0xc4, 0x95, 0x37, 0x6e, 0xdc, 0xa5, 0x57, 0xae, 0x41,
+    0x82, 0x19, 0x32, 0x64, 0xc8, 0x8d, 0x07, 0x0e, 0x1c, 0x38, 0x70, 0xe0, 0xdd, 0xa7, 0x53, 0xa6,
+    0x51, 0xa2, 0x59, 0xb2, 0x79, 0xf2, 0xf9, 0xef, 0xc3, 0x9b, 0x2b, 0x56, 0xac, 0x45, 0x8a, 0x09,
+    0x12, 0x24, 0x48, 0x90, 0x3d, 0x7a, 0xf4, 0xf5, 0xf7, 0xf3, 0xfb, 0xeb, 0xcb, 0x8b, 0x0b, 0x16,
+    0x2c, 0x58, 0xb0, 0x7d, 0xfa, 0xe9, 0xcf, 0x83, 0x1b, 0x36, 0x6c, 0xd8, 0xad, 0x47, 0x8e, 0x00
+];
+
+// Badness coefficients.
+VanillaQR.N1 = 3;
+VanillaQR.N2 = 3;
+VanillaQR.N3 = 40;
+VanillaQR.N4 = 10;
+
+/**
+ * Module loading footer
+ */
+
+module.exports = { VanillaQR };
+
+},{}],55:[function(require,module,exports){
+const home_page = require('home_page')
+
+module.exports = wallet
+
+function wallet (sid) {
+  document.title = 'flamingo wallet'
+  document.head.querySelector('link').setAttribute('href', 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦩</text></svg>')
+
+  const state = {}
+
+  function protocol (message, notify) {
+    const { from } = message
+    state[from] = { notify }
+
+    function listen (message) {
+      const { type, data } = message
+      if (on[type]) on[type](data)
+    }
+
+    return listen
+  }
+
+  const on = {
+    style: injectStyle,
+    value: handleValue
+  }
+
+  function injectStyle (data) {
+    console.log('Injecting shared style (if needed)', data)
+  }
+
+  function handleValue (data) {
+    console.log(`"${data.id}" value:`, data.value)
+  }
+
+  function onbatch (batch) {
+    console.log(' Watch triggered with batch:', batch)
+    for (const { type, data } of batch) {
+      if (on[type]) {
+        on[type](data)
+      }
+    }
+  }
+
+  const page = document.createElement('div')
+
+  async function main () {
+    console.log(' main() started')
+
+    const home_page_component = await home_page(sid, protocol)
+
+    page.innerHTML = `
+      <div style="display:flex; flex-direction:row; gap: 20px; margin: 20px;">
+        <div style="font-size: 18px; font-weight: bold; font-family: Arial, sans-serif; margin-block: 10px;">
+          <div class="component-label" style="padding-bottom:10px;">Home Page</div>
+          <div id="home-page-container"></div>
+        </div>
+      </div>
+    `
+    page.querySelector('#home-page-container').appendChild(home_page_component)
+
+    console.log('Page mounted')
+  }
+
+  main()
+
+  return page
+}
+
+},{"home_page":19}],56:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { sdb, get } = statedb(fallback_module)
+
+const general_button = require('general_button')
+const switch_account = require('switch_account')
+
+module.exports = wallet_button
+
+async function wallet_button(opts = {}, protocol) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
+
+  const _ = { wallet_general: null }
+
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
+
+  shadow.innerHTML = `
+    <div class="wallet-buttons wallet-button-container" id="wallet-button-container">
+        <div class="dropdown-container hidden"></div>
+    </div>
+    <style></style>
+  `
+
+  const style = shadow.querySelector('style')
+  const wallet_container = shadow.querySelector('#wallet-button-container')
+  const wallet_dropdown = wallet_container.querySelector('.dropdown-container')
+
+  // -------------------- on object --------------------
+  const on = {
+    style: inject,
+    data: ondata
+  }
+
+  const subs = await sdb.watch(onbatch)
+
+  // sendUp function from parent
+  const sendUp = protocol ? protocol((msg) => {
+    console.log('[wallet_button] message from parent ->', msg)
+  }) : null
+
+  // -------------------- Create Wallet Button --------------------
+  const wallet_btn = await general_button(subs[0], button_protocol('wallet_general'))
+  wallet_container.insertBefore(wallet_btn, wallet_dropdown)
+  wallet_btn._action = 'wallet_action'
+
+  let switch_el = null
+
+  function close_dropdown() {
+    wallet_dropdown.classList.add('hidden')
+  }
+
+  wallet_btn.onclick = async (event) => {
+    event.stopPropagation()
+    if (wallet_btn._action !== 'wallet_action') return
+
+    if (!wallet_dropdown.classList.contains('hidden')) {
+      close_dropdown()
+      return
+    }
+
+    if (!switch_el) {
+      const switchProtocol = (sendToSwitch) => (msgFromSwitch) => {
+        const forwarded = { from: 'switch_account', ...msgFromSwitch }
+        if (sendUp) sendUp(forwarded)
+      }
+
+      switch_el = await switch_account(subs[1], switchProtocol)
+      wallet_dropdown.appendChild(switch_el)
+    }
+
+    wallet_dropdown.classList.remove('hidden')
+  }
+
+  // -------------------- Initial Config --------------------
+  _.wallet_general?.({
+    type: 'button_name',
+    data: { name: 'Wallet', action: 'wallet_action' }
+  })
+
+  // -------------------- Return element --------------------
+  return el
+
+  // ------------------------- Helpers -------------------------
+  function fail(data, type) {
+    throw new Error('Invalid message type', { cause: { data, type } })
+  }
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const handler = on[type] || fail
+      handler(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const buttonData = data[0]?.value || {}
+    // can handle button-specific updates here if needed
+  }
+
+  function button_protocol(key) {
+    return send => {
+      _[key] = send
+      return send
+    }
+  }
+}
+
+// ============ Fallback Setup ============
+function fallback_module() {
+  return {
+    api,
+    _: {
+      'general_button': { $: '' },
+      'switch_account': { $: '' }
+    }
+  }
+
+  function api(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+
+    const general_button = {
+      mapping: { style: 'style', data: 'data' },
+      0: {} // wallet button
+    }
+
+    const switch_account = {
+      mapping: { style: 'style', data: 'data', icons: 'icons' },
+      1: { btc: 0.789, lightning: 0.9 }
+    }
+
+    return {
+      drive: {
+        'style/': { 'wallet_button.css': { '$ref': 'wallet_button.css' } },
+        'data/': { 'opts.json': { raw: opts || {}} }
+      },
+      _: { general_button, switch_account }
+    }
+  }
+}
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/wallet_button/wallet_button.js")
+},{"STATE":57,"general_button":17,"switch_account":45}],57:[function(require,module,exports){
+
+},{}],58:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+
+const wallet = require('flamingo-ui')
+
+function defaults () {
+  return {
+    drive: {},
+    _: {}
+  }
+}
+
+const { sdb } = statedb(defaults)
+const [{ sid }] = sdb.onwatch(() => {})
+
+document.body.append(wallet(sid))
+
+}).call(this)}).call(this,"/web/page.js")
+},{"STATE":57,"flamingo-ui":55}]},{},[58]);
