@@ -5,16 +5,16 @@
     "description": "Flamingo Wallet - Bitcoin Lightning Network wallet application",
     "scripts": {
         "build": "browserify web/page.js -i STATE -o bundle.js && browserify web/dev.js -o debug.bundle.js",
-        "dev": "budo web/page.js:bundle.js --dir ./pages --dir ./ --dir ./node_modules --live --open -- -i STATE",
-        "dev-debug": "budo web/dev.js:bundle.js --dir ./ --live --host 0.0.0.0",
-        "node": "fw init . 2>/dev/null; fw up",
+        "dev": "budo web/page.js:bundle.js --dir . --live --open -- -i STATE",
+        "dev-debug": "budo web/dev.js:debug.bundle.js --open",
+        "node": "fw up",
         "start": "npm run node & npm run dev",
         "start-dev": "npm run node & npm run dev-debug",
-        "run": "fw run scenario.json"
+        "node-setup": "fw run scenario.json"
     },
     "dependencies": {
-        "flamingo-ui": "file:../flamingo-ui",
-        "flamingo-node": "file:../flamingo-node"
+        "flamingo-ui": "basim-12/flamingo-ui",
+        "flamingo-node": "basim-12/flamingo-node"
     },
     "devDependencies": {
         "budo": "^11.8.4",

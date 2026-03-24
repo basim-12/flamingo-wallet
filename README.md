@@ -9,7 +9,7 @@ npm install && npm start
 ```
 
 This will:
-1. **Start the backend** — installs Docker if needed, builds and runs the Flamingo node container
+1. **Start the backend** — runs `fw up` (installs Docker if needed, auto-creates `env.json`, builds and runs the container)
 2. **Start the frontend** — launches a budo dev server with live reload
 
 ## Scripts
@@ -21,16 +21,18 @@ This will:
 | `npm run dev-debug` | Start frontend only (legacy dev dashboard) |
 | `npm run build` | Build production bundles |
 | `npm run node` | Start backend only (Docker) |
-| `npm run run` | Initialize network from `scenario.json` |
+| `npm run node-setup` | Initialize network from `scenario.json` |
 
-## Architecture
+## Dev Setup
 
+To work on `flamingo-ui` and `flamingo-wallet` in parallel, use `npm link`:
+
+```bash
+cd ../flamingo-ui && npm link
+cd ../flamingo-wallet && npm link flamingo-ui
 ```
-flamingo-wallet/          ← You are here (app entry point)
-  ├── flamingo-node/      ← Backend (installed via npm)
-  ├── flamingo-ui/        ← UI components (installed via npm)
-  └── flamingo-docker/    ← Docker config (pulled by flamingo-node)
-```
+
+This makes `flamingo-wallet` use your local `flamingo-ui` instead of the one from GitHub.
 
 ## Pages
 
@@ -44,10 +46,10 @@ flamingo-wallet/          ← You are here (app entry point)
 Edit `scenario.json` to customize the Lightning Network topology, then run:
 
 ```bash
-npm run run
+npm run node-setup
 ```
 
-See [flamingo-node README](https://github.com/basim-12/flamingo-node#network-scenarios) for the scenario JSON format.
+See [flamingo-node README](https://github.com/playproject-io/flamingo-node#network-scenarios) for the scenario JSON format.
 
 ## License
 
