@@ -9227,43 +9227,54 @@ VanillaQR.N4 = 10;
 module.exports = { VanillaQR };
 
 },{}],55:[function(require,module,exports){
+(function (__filename){(function (){
+const STATE = require('STATE')
+const statedb = STATE(__filename)
+const { get } = statedb(defaults)
+
 const home_page = require('home_page')
 
 module.exports = wallet
 
-function wallet (sid) {
+async function wallet(sid) {
   document.title = 'flamingo wallet'
-  document.head.querySelector('link').setAttribute('href', 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦩</text></svg>')
+
+  const link = document.head.querySelector('link')
+  link.setAttribute(
+    'href',
+    'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦩</text></svg>'
+  )
 
   const state = {}
-
-  function protocol (message, notify) {
-    const { from } = message
-    state[from] = { notify }
-
-    function listen (message) {
-      const { type, data } = message
-      if (on[type]) on[type](data)
-    }
-
-    return listen
-  }
 
   const on = {
     style: injectStyle,
     value: handleValue
   }
 
-  function injectStyle (data) {
+  const { sdb } = get(sid)
+  const [sub] = await sdb.watch(onbatch)
+
+  function protocol(message) {
+    const { from } = message
+
+    return function listen(message) {
+      const { type, data } = message
+      if (on[type]) on[type](data)
+    }
+  }
+
+  function injectStyle(data) {
     console.log('Injecting shared style (if needed)', data)
   }
 
-  function handleValue (data) {
+  function handleValue(data) {
     console.log(`"${data.id}" value:`, data.value)
   }
 
-  function onbatch (batch) {
-    console.log(' Watch triggered with batch:', batch)
+  function onbatch(batch) {
+    console.log('Watch triggered with batch:', batch)
+
     for (const { type, data } of batch) {
       if (on[type]) {
         on[type](data)
@@ -9273,10 +9284,10 @@ function wallet (sid) {
 
   const page = document.createElement('div')
 
-  async function main () {
-    console.log(' main() started')
+  async function main() {
+    console.log('main() started')
 
-    const home_page_component = await home_page(sid, protocol)
+    const home_page_component = await home_page(sub, protocol)
 
     page.innerHTML = `
       <div style="display:flex; flex-direction:row; gap: 20px; margin: 20px;">
@@ -9286,17 +9297,45 @@ function wallet (sid) {
         </div>
       </div>
     `
-    page.querySelector('#home-page-container').appendChild(home_page_component)
+
+    page.querySelector('#home-page-container')
+      .appendChild(home_page_component)
 
     console.log('Page mounted')
   }
 
-  main()
+  await main()
 
   return page
 }
 
-},{"home_page":19}],56:[function(require,module,exports){
+function defaults() {
+  return {
+    drive: {},
+    api,
+    _: {
+      home_page: { $: '' }
+    }
+  }
+
+  function api() {
+    return {
+      drive: { style: {}, data: {}, icons: {} },
+      _: {
+        home_page: {
+          0: '',
+          mapping: {
+            style: 'style',
+            data: 'data',
+            icons: 'icons'
+          }
+        }
+      }
+    }
+  }
+}
+}).call(this)}).call(this,"/node_modules/flamingo-ui/src/node_modules/wallet/index.js")
+},{"STATE":57,"home_page":19}],56:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -9455,19 +9494,26 @@ function fallback_module() {
 const STATE = require('STATE')
 const statedb = STATE(__filename)
 
+statedb.admin()
+const { sdb } = statedb(defaults)
+
 const wallet = require('flamingo-ui')
 
-function defaults () {
-  return {
-    drive: {},
-    _: {}
-  }
+async function start() {
+  const [{ sid }] = await sdb.watch(() => { })
+  document.body.append(await wallet(sid))
 }
 
-const { sdb } = statedb(defaults)
-const [{ sid }] = sdb.onwatch(() => {})
+start()
 
-document.body.append(wallet(sid))
 
+function defaults() {
+  return {
+    drive: { style: {}, data: {}, icons: {} },
+    _: {
+      'flamingo-ui': { $: '', 0: '', mapping: { style: 'style', data: 'data', icons: 'icons' } }
+    }
+  }
+}
 }).call(this)}).call(this,"/web/page.js")
 },{"STATE":57,"flamingo-ui":55}]},{},[58]);

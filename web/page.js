@@ -1,27 +1,24 @@
 const STATE = require('STATE')
 const statedb = STATE(__filename)
 
-function defaults() {
-  return {
-    drive: {},
-    _: {
-      'flamingo-ui': {
-        $: '',
-        _: {
-          'home_page': { $: '' }
-        }
-      }
-    }
-  }
-}
-
 statedb.admin()
 const { sdb } = statedb(defaults)
 
+const wallet = require('flamingo-ui')
+
 async function start() {
   const [{ sid }] = await sdb.watch(() => { })
-  const wallet = require('flamingo-ui')
-  document.body.append(wallet(sid))
+  document.body.append(await wallet(sid))
 }
 
 start()
+
+
+function defaults() {
+  return {
+    drive: { style: {}, data: {}, icons: {} },
+    _: {
+      'flamingo-ui': { $: '', 0: '', mapping: { style: 'style', data: 'data', icons: 'icons' } }
+    }
+  }
+}
