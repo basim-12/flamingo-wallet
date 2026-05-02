@@ -1,86 +1,86 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = dev_wallet
 
-function dev_wallet () {
-// lib/web.js
-const wsUrl = 'ws://localhost:8080'
+function dev_wallet() {
+  // lib/web.js
+  const wsUrl = 'ws://localhost:8080'
 
-// --- GLOBAL HELPERS (Defined Top-Level) ---
+  // --- GLOBAL HELPERS (Defined Top-Level) ---
 
-// 🌍 Global Account Context
-window.currentCtxUserId = 'node4'; // Default to User Wallet
+  // 🌍 Global Account Context
+  window.currentCtxUserId = 'node4'; // Default to User Wallet
 
-window.getCurrentNodeId = function () {
-  return window.currentCtxUserId;
-}
-
-function copyToClipboard(text, el) {
-  // Check if API exists to prevent crash
-  if (!navigator.clipboard) {
-    console.warn('Clipboard API not available in this context');
-    // Fallback or just return so the rest of the app works
-    return;
+  window.getCurrentNodeId = function () {
+    return window.currentCtxUserId;
   }
 
-  navigator.clipboard.writeText(text).then(() => {
-    if (el) {
-      const originalText = el.innerHTML // Use innerHTML to preserve tags if any
-      const originalWidth = el.offsetWidth // Prevent jumping
-
-      el.style.width = `${originalWidth}px`
-      el.style.textAlign = 'center'
-      el.textContent = 'Copied!'
-
-      setTimeout(() => {
-        el.innerHTML = originalText
-        el.style.width = ''
-        el.style.textAlign = ''
-      }, 1000)
+  function copyToClipboard(text, el) {
+    // Check if API exists to prevent crash
+    if (!navigator.clipboard) {
+      console.warn('Clipboard API not available in this context');
+      // Fallback or just return so the rest of the app works
+      return;
     }
-  }).catch(err => {
-    console.error('Failed to copy: ', err)
-  })
-}
 
-// Global handler for history clicks
-window.handleHistoryClick = function (el, id, type) {
-  // 1. Copy to Clipboard (Fail safely if API missing)
-  // If clicked from table (el exists), show "Copied!". If from daily log row, pass null.
-  const isTableClick = el && el.tagName === 'SPAN';
-  copyToClipboard(id, isTableClick ? el : null);
+    navigator.clipboard.writeText(text).then(() => {
+      if (el) {
+        const originalText = el.innerHTML // Use innerHTML to preserve tags if any
+        const originalWidth = el.offsetWidth // Prevent jumping
 
-  // 2. Fill Inputs
-  // We populate 'lookup-id' because both Lookup and Validate buttons read from it.
-  const lookupInput = document.getElementById('lookup-id');
-  if (lookupInput) lookupInput.value = id;
+        el.style.width = `${originalWidth}px`
+        el.style.textAlign = 'center'
+        el.textContent = 'Copied!'
 
-  // 3. Scroll to Lookup Section
-  const lookupContainer = document.getElementById('lookup-container');
-  if (lookupContainer) lookupContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          el.innerHTML = originalText
+          el.style.width = ''
+          el.style.textAlign = ''
+        }, 1000)
+      }
+    }).catch(err => {
+      console.error('Failed to copy: ', err)
+    })
+  }
 
-  // 4. Auto-Trigger Lookup
-  // Use a small timeout to allow the DOM value to settle
-  setTimeout(() => {
-    if (type === 'BTC') {
-      const btn = document.getElementById('btn-lookup-btc');
-      if (btn) btn.click();
-    } else {
-      const btn = document.getElementById('btn-lookup-ln');
-      if (btn) btn.click();
-    }
-  }, 100);
-};
+  // Global handler for history clicks
+  window.handleHistoryClick = function (el, id, type) {
+    // 1. Copy to Clipboard (Fail safely if API missing)
+    // If clicked from table (el exists), show "Copied!". If from daily log row, pass null.
+    const isTableClick = el && el.tagName === 'SPAN';
+    copyToClipboard(id, isTableClick ? el : null);
 
-// 🔔 Show Payment Success Overlay
-window.showPaymentSuccess = function (data) {
-  console.log('showing success', data);
-  const amt = data.amount_received_msat || data.amount_msat || 0;
-  const desc = data.description || 'No description';
+    // 2. Fill Inputs
+    // We populate 'lookup-id' because both Lookup and Validate buttons read from it.
+    const lookupInput = document.getElementById('lookup-id');
+    if (lookupInput) lookupInput.value = id;
 
-  // 1. Update the UI Area if visible
-  const contentEl = document.getElementById('create-ln-content');
-  if (contentEl) {
-    contentEl.innerHTML = `
+    // 3. Scroll to Lookup Section
+    const lookupContainer = document.getElementById('lookup-container');
+    if (lookupContainer) lookupContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // 4. Auto-Trigger Lookup
+    // Use a small timeout to allow the DOM value to settle
+    setTimeout(() => {
+      if (type === 'BTC') {
+        const btn = document.getElementById('btn-lookup-btc');
+        if (btn) btn.click();
+      } else {
+        const btn = document.getElementById('btn-lookup-ln');
+        if (btn) btn.click();
+      }
+    }, 100);
+  };
+
+  // 🔔 Show Payment Success Overlay
+  window.showPaymentSuccess = function (data) {
+    console.log('showing success', data);
+    const amt = data.amount_received_msat || data.amount_msat || 0;
+    const desc = data.description || 'No description';
+
+    // 1. Update the UI Area if visible
+    const contentEl = document.getElementById('create-ln-content');
+    if (contentEl) {
+      contentEl.innerHTML = `
         <div style="background:#d4edda; color:#155724; padding:20px; text-align:center; border-radius:8px; border:2px solid #c3e6cb; animation: fadeIn 0.5s;">
            <div style="font-size:3em;">✅</div>
            <h3 style="margin:10px 0;">Payment Received!</h3>
@@ -88,18 +88,18 @@ window.showPaymentSuccess = function (data) {
            <div style="color:#555; margin-top:5px;">${desc}</div>
         </div>
       `;
+    }
+
+    // 2. Play a sound (optional/fun) - Removed for now to keep it simple
+
+    // 3. Auto-refresh balances
+    const btnFund = document.getElementById('btn-listfunds');
+    if (btnFund) btnFund.click();
+    const btnBtc = document.getElementById('btn-getbalance');
+    if (btnBtc) btnBtc.click();
   }
 
-  // 2. Play a sound (optional/fun) - Removed for now to keep it simple
-
-  // 3. Auto-refresh balances
-  const btnFund = document.getElementById('btn-listfunds');
-  if (btnFund) btnFund.click();
-  const btnBtc = document.getElementById('btn-getbalance');
-  if (btnBtc) btnBtc.click();
-}
-
-document.body.innerHTML = `
+  document.body.innerHTML = `
   <style>
     /* --- GENERAL LAYOUT --- */
     body {
@@ -917,39 +917,39 @@ document.body.innerHTML = `
   </div>
 `;
 
-// --- JAVASCRIPT ---
+  // --- JAVASCRIPT ---
 
-// Drawer Logic
-window.toggleDrawer = function () {
-  const d = document.getElementById('account-drawer');
-  const b = document.getElementById('drawer-backdrop');
-  if (d.classList.contains('open')) {
-    d.classList.remove('open');
-    setTimeout(() => b.style.display = 'none', 300);
-  } else {
-    b.style.display = 'block';
-    window.renderAccountSwitcher();
-    setTimeout(() => d.classList.add('open'), 10);
+  // Drawer Logic
+  window.toggleDrawer = function () {
+    const d = document.getElementById('account-drawer');
+    const b = document.getElementById('drawer-backdrop');
+    if (d.classList.contains('open')) {
+      d.classList.remove('open');
+      setTimeout(() => b.style.display = 'none', 300);
+    } else {
+      b.style.display = 'block';
+      window.renderAccountSwitcher();
+      setTimeout(() => d.classList.add('open'), 10);
+    }
   }
-}
 
-window.renderAccountSwitcher = function () {
-  const container = document.getElementById('account-list');
-  container.innerHTML = '<i>Loading nodes...</i>';
+  window.renderAccountSwitcher = function () {
+    const container = document.getElementById('account-list');
+    container.innerHTML = '<i>Loading nodes...</i>';
 
-  send('list_all_accounts', {}, (m) => {
-    if (m.data.status === 'success') {
-      const nodes = m.data.data;
-      container.innerHTML = '';
-      nodes.forEach(n => {
-        const isActive = (n.id === window.currentCtxUserId);
-        const statusClass = n.status === 'online' ? 'status-online' : 'status-offline';
+    send('list_all_accounts', {}, (m) => {
+      if (m.data.status === 'success') {
+        const nodes = m.data.data;
+        container.innerHTML = '';
+        nodes.forEach(n => {
+          const isActive = (n.id === window.currentCtxUserId);
+          const statusClass = n.status === 'online' ? 'status-online' : 'status-offline';
 
-        const card = document.createElement('div');
-        card.className = `account-card ${isActive ? 'active' : ''}`;
-        card.onclick = () => window.switchAccount(n.id);
+          const card = document.createElement('div');
+          card.className = `account-card ${isActive ? 'active' : ''}`;
+          card.onclick = () => window.switchAccount(n.id);
 
-        card.innerHTML = `
+          card.innerHTML = `
                   <div class="acct-avatar" style="background:${n.color}">${n.alias.charAt(0)}</div>
                   <div class="acct-info">
                       <span class="acct-name">${n.alias} <span class="acct-status ${statusClass}"></span></span>
@@ -957,217 +957,217 @@ window.renderAccountSwitcher = function () {
                       <span class="acct-bal">${n.balance.sats.toLocaleString()} sats</span>
                   </div>
                `;
-        container.appendChild(card);
+          container.appendChild(card);
 
-        if (isActive) {
-          const pInfo = document.getElementById('btn-profile');
-          if (pInfo) {
-            pInfo.style.background = n.color;
-            pInfo.style.color = 'white';
-            pInfo.textContent = n.alias ? n.alias.charAt(0) : '?';
+          if (isActive) {
+            const pInfo = document.getElementById('btn-profile');
+            if (pInfo) {
+              pInfo.style.background = n.color;
+              pInfo.style.color = 'white';
+              pInfo.textContent = n.alias ? n.alias.charAt(0) : '?';
+            }
           }
-        }
-      });
-    } else {
-      container.innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
-    }
-  });
-}
-
-window.switchAccount = function (nodeId) {
-  if (window.currentCtxUserId === nodeId) return;
-
-  window.currentCtxUserId = nodeId;
-  window.toggleDrawer();
-
-  // Refresh common widgets
-  const btnFund = document.getElementById('btn-listfunds');
-  if (btnFund) btnFund.click();
-
-  const btnHist = document.getElementById('btn-refresh-all-hist');
-  if (btnHist) btnHist.click();
-
-  const btnInfo = document.getElementById('btn-getinfo');
-  if (btnInfo) btnInfo.click();
-
-  // Refresh Contacts if active
-  if (document.getElementById('tab-contacts').classList.contains('active')) {
-    const btn = document.getElementById('btn-refresh-contacts');
-    if (btn) btn.click();
-  }
-}
-
-// Tab Switching Logic
-window.openTab = function (tabName) {
-  const contents = document.getElementsByClassName('tab-content');
-  for (let i = 0; i < contents.length; i++) contents[i].classList.remove('active');
-  const btns = document.getElementsByClassName('tab-btn');
-  for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-  document.getElementById(tabName).classList.add('active');
-  document.getElementById(tabName).classList.add('active');
-  if (event && event.target) {
-    event.target.classList.add('active');
-  }
-
-  // Auto-load contacts when entering the tab
-  if (tabName === 'tab-contacts') {
-    setTimeout(() => {
-      const btn = document.getElementById('btn-refresh-contacts');
-      if (btn) btn.click();
-    }, 100);
-  }
-}
-
-// WebSocket Setup
-const name = 'frontend'
-const to = 'backend'
-let mid = 0
-const wait = new Map()
-let ws
-
-function connect() {
-  ws = new WebSocket(wsUrl)
-  const statusEl = document.getElementById('status')
-
-  ws.onopen = () => {
-    statusEl.innerText = `✅ Connected to ${wsUrl}`
-    statusEl.style.color = 'green'
-    statusEl.innerText += ' (Listening...)'
-    console.log('WS Open');
-    setupButtons()
-
-    // 🔔 Subscribe to payment updates
-    send('subscribe_invoices', {});
-    send('monitor_btc_requests', {}); // Start BTC monitor
-
-    // Initial Load of Requests (Templates/Chat)
-    if (window.loadActiveRequests) window.loadActiveRequests();
-    send('monitor_btc_requests', {}); // Start BTC monitor
-
-  }
-
-  ws.onclose = () => {
-    statusEl.innerText = '❌ Disconnected — retrying...'
-    statusEl.style.color = 'red'
-    console.log('WS Close - Retrying in 2s...');
-    setTimeout(connect, 2000)
-  }
-
-  ws.onerror = (err) => {
-    console.error('WebSocket error details:', err)
-    statusEl.innerText = '⚠️ WebSocket Error — see console'
-    statusEl.style.color = 'orange'
-  }
-
-  ws.onmessage = (ev) => {
-    const m = JSON.parse(ev.data)
-    const key = m.head ? m.head.join(',') : null
-    if (key && wait.has(key)) {
-      const handler = wait.get(key)
-      wait.delete(key)
-      if (typeof handler === 'function') {
-        handler(m)
+        });
       } else {
-        console.warn('Received message for key', key, 'but handler is not a function:', handler);
-      }
-    }
-
-    // 🔥 Handle Push Notifications
-    if (m.type === 'payment_received') {
-      showPaymentSuccess(m.data);
-      // Refresh requests list
-      loadActiveRequests();
-    }
-    if (m.type === 'request_update') {
-      // Just refresh the whole list for simplicity
-      loadActiveRequests();
-    }
-  }
-}
-
-function send(type, data, handler) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    console.warn(`WebSocket not ready for ${type} (Status: ${ws ? ws.readyState : 'null'})`);
-    return;
-  }
-  const head = [name, to, mid++]
-  const msg = { head, type, data }
-  const expectedKey = ['backend', name, head[2]].join(',')
-  wait.set(expectedKey, handler)
-  ws.send(JSON.stringify(msg))
-}
-
-// Utility: Get current active Raw Output element based on visible tab
-function getActiveRaw() {
-  const activeTab = document.querySelector('.tab-content.active');
-  return activeTab ? activeTab.querySelector('.raw-log') : document.getElementById('raw-overview');
-}
-
-// Populates simple lists in sub-tabs
-function populateHistoryList(containerId, items, idField, descField) {
-  const container = document.getElementById(containerId)
-  container.innerHTML = ''
-  if (!items || items.length === 0) {
-    container.innerHTML = '<i>No history found.</i>'
-    return
-  }
-  items.forEach(item => {
-    const id = item[idField]
-    const desc = item[descField]
-    const itemEl = document.createElement('div')
-    itemEl.className = 'history-item'
-    const idEl = document.createElement('span')
-    idEl.className = 'history-item-id' // kept for styling
-    idEl.textContent = `${id.substring(0, 20)}...`
-
-    // Use the global handler for these simple lists too, assuming type based on container
-    const isLn = containerId.includes('ln');
-    idEl.onclick = () => window.handleHistoryClick(idEl, id, isLn ? 'LN' : 'BTC');
-    idEl.style.color = '#0056b3'; idEl.style.cursor = 'pointer';
-
-    itemEl.appendChild(idEl)
-    itemEl.append(` - ${desc}`)
-    container.appendChild(itemEl)
-  })
-}
-
-// Helper: Format Satoshis
-const fmtSats = (msat) => Math.floor(msat / 1000).toLocaleString();
-
-function setupButtons() {
-
-  // 1. Refresh All History Data
-  document.getElementById('btn-refresh-all-hist').onclick = () => {
-    const userId = getCurrentNodeId();;
-    const rawEl = document.getElementById('raw-history');
-    const tableBody = document.getElementById('full-history-body');
-
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
-
-    // A. Get Summary Stats
-    send('get_transaction_summary', { userId }, (m) => {
-      if (m.data.status === 'success') {
-        const d = m.data.data;
-        document.getElementById('sum-net').textContent = fmtSats(d.net_balance_msat);
-        document.getElementById('sum-in').textContent = fmtSats(d.total_received_msat);
-        document.getElementById('sum-out').textContent = fmtSats(d.total_sent_msat);
-        document.getElementById('sum-fees').textContent = fmtSats(d.total_fees_paid_msat);
+        container.innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
       }
     });
+  }
 
-    // B. Get Detailed History
-    send('get_transaction_history', { userId, limit: 50 }, (m) => {
-      rawEl.textContent = JSON.stringify(m, null, 2);
-      tableBody.innerHTML = '';
+  window.switchAccount = function (nodeId) {
+    if (window.currentCtxUserId === nodeId) return;
 
-      if (m.data.status === 'success' && m.data.data.length > 0) {
-        m.data.data.forEach(tx => {
-          const isBtc = tx.type === 'BTC';
-          const isIn = tx.direction === 'IN';
-          const dateStr = new Date(tx.timestamp * 1000).toLocaleString();
+    window.currentCtxUserId = nodeId;
+    window.toggleDrawer();
 
-          const row = document.createElement('tr');
-          row.innerHTML = `
+    // Refresh common widgets
+    const btnFund = document.getElementById('btn-listfunds');
+    if (btnFund) btnFund.click();
+
+    const btnHist = document.getElementById('btn-refresh-all-hist');
+    if (btnHist) btnHist.click();
+
+    const btnInfo = document.getElementById('btn-getinfo');
+    if (btnInfo) btnInfo.click();
+
+    // Refresh Contacts if active
+    if (document.getElementById('tab-contacts').classList.contains('active')) {
+      const btn = document.getElementById('btn-refresh-contacts');
+      if (btn) btn.click();
+    }
+  }
+
+  // Tab Switching Logic
+  window.openTab = function (tabName) {
+    const contents = document.getElementsByClassName('tab-content');
+    for (let i = 0; i < contents.length; i++) contents[i].classList.remove('active');
+    const btns = document.getElementsByClassName('tab-btn');
+    for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    document.getElementById(tabName).classList.add('active');
+    document.getElementById(tabName).classList.add('active');
+    if (event && event.target) {
+      event.target.classList.add('active');
+    }
+
+    // Auto-load contacts when entering the tab
+    if (tabName === 'tab-contacts') {
+      setTimeout(() => {
+        const btn = document.getElementById('btn-refresh-contacts');
+        if (btn) btn.click();
+      }, 100);
+    }
+  }
+
+  // WebSocket Setup
+  const name = 'frontend'
+  const to = 'backend'
+  let mid = 0
+  const wait = new Map()
+  let ws
+
+  function connect() {
+    ws = new WebSocket(wsUrl)
+    const statusEl = document.getElementById('status')
+
+    ws.onopen = () => {
+      statusEl.innerText = `✅ Connected to ${wsUrl}`
+      statusEl.style.color = 'green'
+      statusEl.innerText += ' (Listening...)'
+      console.log('WS Open');
+      setupButtons()
+
+      // 🔔 Subscribe to payment updates
+      send('subscribe_invoices', {});
+      send('monitor_btc_requests', {}); // Start BTC monitor
+
+      // Initial Load of Requests (Templates/Chat)
+      if (window.loadActiveRequests) window.loadActiveRequests();
+      send('monitor_btc_requests', {}); // Start BTC monitor
+
+    }
+
+    ws.onclose = () => {
+      statusEl.innerText = '❌ Disconnected — retrying...'
+      statusEl.style.color = 'red'
+      console.log('WS Close - Retrying in 2s...');
+      setTimeout(connect, 2000)
+    }
+
+    ws.onerror = (err) => {
+      console.error('WebSocket error details:', err)
+      statusEl.innerText = '⚠️ WebSocket Error — see console'
+      statusEl.style.color = 'orange'
+    }
+
+    ws.onmessage = (ev) => {
+      const m = JSON.parse(ev.data)
+      const key = m.head ? m.head.join(',') : null
+      if (key && wait.has(key)) {
+        const handler = wait.get(key)
+        wait.delete(key)
+        if (typeof handler === 'function') {
+          handler(m)
+        } else {
+          console.warn('Received message for key', key, 'but handler is not a function:', handler);
+        }
+      }
+
+      // 🔥 Handle Push Notifications
+      if (m.type === 'payment_received') {
+        showPaymentSuccess(m.data);
+        // Refresh requests list
+        loadActiveRequests();
+      }
+      if (m.type === 'request_update') {
+        // Just refresh the whole list for simplicity
+        loadActiveRequests();
+      }
+    }
+  }
+
+  function send(type, data, handler) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.warn(`WebSocket not ready for ${type} (Status: ${ws ? ws.readyState : 'null'})`);
+      return;
+    }
+    const head = [name, to, mid++]
+    const msg = { head, type, data }
+    const expectedKey = ['backend', name, head[2]].join(',')
+    wait.set(expectedKey, handler)
+    ws.send(JSON.stringify(msg))
+  }
+
+  // Utility: Get current active Raw Output element based on visible tab
+  function getActiveRaw() {
+    const activeTab = document.querySelector('.tab-content.active');
+    return activeTab ? activeTab.querySelector('.raw-log') : document.getElementById('raw-overview');
+  }
+
+  // Populates simple lists in sub-tabs
+  function populateHistoryList(containerId, items, idField, descField) {
+    const container = document.getElementById(containerId)
+    container.innerHTML = ''
+    if (!items || items.length === 0) {
+      container.innerHTML = '<i>No history found.</i>'
+      return
+    }
+    items.forEach(item => {
+      const id = item[idField]
+      const desc = item[descField]
+      const itemEl = document.createElement('div')
+      itemEl.className = 'history-item'
+      const idEl = document.createElement('span')
+      idEl.className = 'history-item-id' // kept for styling
+      idEl.textContent = `${id.substring(0, 20)}...`
+
+      // Use the global handler for these simple lists too, assuming type based on container
+      const isLn = containerId.includes('ln');
+      idEl.onclick = () => window.handleHistoryClick(idEl, id, isLn ? 'LN' : 'BTC');
+      idEl.style.color = '#0056b3'; idEl.style.cursor = 'pointer';
+
+      itemEl.appendChild(idEl)
+      itemEl.append(` - ${desc}`)
+      container.appendChild(itemEl)
+    })
+  }
+
+  // Helper: Format Satoshis
+  const fmtSats = (msat) => Math.floor(msat / 1000).toLocaleString();
+
+  function setupButtons() {
+
+    // 1. Refresh All History Data
+    document.getElementById('btn-refresh-all-hist').onclick = () => {
+      const userId = getCurrentNodeId();;
+      const rawEl = document.getElementById('raw-history');
+      const tableBody = document.getElementById('full-history-body');
+
+      tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+
+      // A. Get Summary Stats
+      send('get_transaction_summary', { userId }, (m) => {
+        if (m.data.status === 'success') {
+          const d = m.data.data;
+          document.getElementById('sum-net').textContent = fmtSats(d.net_balance_msat);
+          document.getElementById('sum-in').textContent = fmtSats(d.total_received_msat);
+          document.getElementById('sum-out').textContent = fmtSats(d.total_sent_msat);
+          document.getElementById('sum-fees').textContent = fmtSats(d.total_fees_paid_msat);
+        }
+      });
+
+      // B. Get Detailed History
+      send('get_transaction_history', { userId, limit: 50 }, (m) => {
+        rawEl.textContent = JSON.stringify(m, null, 2);
+        tableBody.innerHTML = '';
+
+        if (m.data.status === 'success' && m.data.data.length > 0) {
+          m.data.data.forEach(tx => {
+            const isBtc = tx.type === 'BTC';
+            const isIn = tx.direction === 'IN';
+            const dateStr = new Date(tx.timestamp * 1000).toLocaleString();
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
             <td><span class="tx-type-tag ${isBtc ? 'tag-btc' : 'tag-ln'}">${tx.type}</span></td>
             <td>${dateStr}</td>
             <td style="font-size:0.85em;">${tx.note || '-'}</td>
@@ -1176,75 +1176,75 @@ function setupButtons() {
             <td>${tx.status}</td>
             <td><span class="clickable-id" onclick="window.handleHistoryClick(this, '${tx.id}', '${tx.type}')">${tx.id.substring(0, 8)}...</span></td>
           `;
-          tableBody.appendChild(row);
-        });
-      } else {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No transactions found.</td></tr>';
-      }
-    });
-  };
+            tableBody.appendChild(row);
+          });
+        } else {
+          tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No transactions found.</td></tr>';
+        }
+      });
+    };
 
-  // 2. Daily Logs Search
-  document.getElementById('btn-get-daily').onclick = () => {
-    const userId = getCurrentNodeId();;
-    const dateVal = document.getElementById('daily-date').value;
-    const resDiv = document.getElementById('daily-res');
-    const rawEl = document.getElementById('raw-history');
+    // 2. Daily Logs Search
+    document.getElementById('btn-get-daily').onclick = () => {
+      const userId = getCurrentNodeId();;
+      const dateVal = document.getElementById('daily-date').value;
+      const resDiv = document.getElementById('daily-res');
+      const rawEl = document.getElementById('raw-history');
 
-    if (!dateVal) { resDiv.innerHTML = '<span style="color:red">Please select a date.</span>'; return; }
+      if (!dateVal) { resDiv.innerHTML = '<span style="color:red">Please select a date.</span>'; return; }
 
-    resDiv.innerHTML = 'Searching...';
+      resDiv.innerHTML = 'Searching...';
 
-    send('get_daily_transactions', { userId, date: dateVal }, (m) => {
-      rawEl.textContent = JSON.stringify(m, null, 2);
-      resDiv.innerHTML = '';
+      send('get_daily_transactions', { userId, date: dateVal }, (m) => {
+        rawEl.textContent = JSON.stringify(m, null, 2);
+        resDiv.innerHTML = '';
 
-      if (m.data.status === 'success' && m.data.data.length > 0) {
-        m.data.data.forEach(tx => {
-          const div = document.createElement('div');
-          div.style.borderBottom = '1px solid #eee';
-          div.style.padding = '8px';
-          div.style.cursor = 'pointer';
-          div.className = 'history-item';
+        if (m.data.status === 'success' && m.data.data.length > 0) {
+          m.data.data.forEach(tx => {
+            const div = document.createElement('div');
+            div.style.borderBottom = '1px solid #eee';
+            div.style.padding = '8px';
+            div.style.cursor = 'pointer';
+            div.className = 'history-item';
 
-          // Pass null for 'el' so we don't replace row text with "Copied!", but still trigger lookup
-          div.onclick = () => window.handleHistoryClick(null, tx.id, tx.type);
+            // Pass null for 'el' so we don't replace row text with "Copied!", but still trigger lookup
+            div.onclick = () => window.handleHistoryClick(null, tx.id, tx.type);
 
-          div.innerHTML = `
+            div.innerHTML = `
                 <div style="display:flex; justify-content:space-between;">
                   <span><b>${new Date(tx.timestamp * 1000).toLocaleTimeString()}</b> <span class="tx-type-tag ${tx.type === 'BTC' ? 'tag-btc' : 'tag-ln'}">${tx.type}</span></span>
                   <span>${tx.direction === 'IN' ? '📥' : '💸'} <b>${fmtSats(tx.amount_msat)}</b> sat</span>
                 </div>
                 <div style="font-size:0.8em; color:#666; margin-top:2px;">ID: ${tx.id.substring(0, 20)}...</div>
             `;
-          resDiv.appendChild(div);
-        });
-      } else {
-        resDiv.textContent = 'No transactions found for this date.';
+            resDiv.appendChild(div);
+          });
+        } else {
+          resDiv.textContent = 'No transactions found for this date.';
+        }
+      });
+    };
+
+    // 3. Lookups in History Tab
+    document.getElementById('btn-lookup-btc').onclick = () => {
+      const tx_id = document.getElementById('lookup-id').value;
+      const resEl = document.getElementById('res-lookup');
+      const rawEl = document.getElementById('raw-history');
+
+      if (!tx_id) {
+        resEl.style.display = 'block';
+        resEl.textContent = 'Error: ID required';
+        return;
       }
-    });
-  };
 
-  // 3. Lookups in History Tab
-  document.getElementById('btn-lookup-btc').onclick = () => {
-    const tx_id = document.getElementById('lookup-id').value;
-    const resEl = document.getElementById('res-lookup');
-    const rawEl = document.getElementById('raw-history');
-
-    if (!tx_id) {
       resEl.style.display = 'block';
-      resEl.textContent = 'Error: ID required';
-      return;
-    }
+      resEl.innerHTML = '⏳ Looking up BTC TX...';
 
-    resEl.style.display = 'block';
-    resEl.innerHTML = '⏳ Looking up BTC TX...';
-
-    send('get_tx_details_from_btcnode', { tx_id }, (m) => {
-      rawEl.textContent = JSON.stringify(m, null, 2);
-      const data = m.data?.data;
-      if (data) {
-        resEl.innerHTML = `
+      send('get_tx_details_from_btcnode', { tx_id }, (m) => {
+        rawEl.textContent = JSON.stringify(m, null, 2);
+        const data = m.data?.data;
+        if (data) {
+          resEl.innerHTML = `
             <div style="margin-bottom:5px;"><strong style="color:#e83e8c;">✅ BTC Transaction Found</strong></div>
             <div style="display:grid; grid-template-columns: auto 1fr; gap:5px 15px;">
                 <b>ID:</b> <span style="font-family:monospace;">${data.txid ? data.txid : tx_id}</span>
@@ -1253,34 +1253,34 @@ function setupButtons() {
                 <b>Time:</b> ${data.time ? new Date(data.time * 1000).toLocaleString() : 'N/A'}
             </div>
           `;
-      } else {
-        resEl.innerHTML = `<span style="color:red">❌ Transaction not found.</span>`;
+        } else {
+          resEl.innerHTML = `<span style="color:red">❌ Transaction not found.</span>`;
+        }
+      });
+    };
+
+    document.getElementById('btn-lookup-ln').onclick = () => {
+      const payment_hash = document.getElementById('lookup-id').value;
+      const userId = getCurrentNodeId();;
+      const resEl = document.getElementById('res-lookup');
+      const rawEl = document.getElementById('raw-history');
+
+      if (!payment_hash) {
+        resEl.style.display = 'block';
+        resEl.textContent = 'Error: Hash required';
+        return;
       }
-    });
-  };
 
-  document.getElementById('btn-lookup-ln').onclick = () => {
-    const payment_hash = document.getElementById('lookup-id').value;
-    const userId = getCurrentNodeId();;
-    const resEl = document.getElementById('res-lookup');
-    const rawEl = document.getElementById('raw-history');
-
-    if (!payment_hash) {
       resEl.style.display = 'block';
-      resEl.textContent = 'Error: Hash required';
-      return;
-    }
+      resEl.innerHTML = '⏳ Looking up LN Invoice...';
 
-    resEl.style.display = 'block';
-    resEl.innerHTML = '⏳ Looking up LN Invoice...';
-
-    send('get_tx_details_from_lnnode', { userId, payment_hash }, (m) => {
-      rawEl.textContent = JSON.stringify(m, null, 2);
-      const d = m.data?.data;
-      if (d) {
-        const status = d.status || (d.payment_hash ? 'Found' : 'Unknown');
-        const amt = d.amount_msat || d.amount_received_msat || '0';
-        resEl.innerHTML = `
+      send('get_tx_details_from_lnnode', { userId, payment_hash }, (m) => {
+        rawEl.textContent = JSON.stringify(m, null, 2);
+        const d = m.data?.data;
+        if (d) {
+          const status = d.status || (d.payment_hash ? 'Found' : 'Unknown');
+          const amt = d.amount_msat || d.amount_received_msat || '0';
+          resEl.innerHTML = `
             <div style="margin-bottom:5px;"><strong style="color:#6f42c1;">⚡ Lightning Record</strong></div>
             <div style="display:grid; grid-template-columns: auto 1fr; gap:5px 15px;">
                 <b>Status:</b> <span style="text-transform:uppercase; font-weight:bold;">${status}</span>
@@ -1289,278 +1289,278 @@ function setupButtons() {
                 <b>Hash:</b> <span style="font-family:monospace;">${payment_hash.substring(0, 20)}...</span>
             </div>
           `;
-      } else {
-        resEl.innerHTML = `<span style="color:red">❌ Invoice/Payment not found on ${userId}.</span>`;
-      }
-    });
-  };
+        } else {
+          resEl.innerHTML = `<span style="color:red">❌ Invoice/Payment not found on ${userId}.</span>`;
+        }
+      });
+    };
 
-  // 4. Validation in History Tab
-  document.getElementById('btn-validate-btc').onclick = () => {
-    const tx_id = document.getElementById('lookup-id').value;
-    const amt = parseFloat(document.getElementById('validate-amt').value);
-    const resEl = document.getElementById('res-lookup');
-    const rawEl = document.getElementById('raw-history');
-    resEl.style.display = 'block';
+    // 4. Validation in History Tab
+    document.getElementById('btn-validate-btc').onclick = () => {
+      const tx_id = document.getElementById('lookup-id').value;
+      const amt = parseFloat(document.getElementById('validate-amt').value);
+      const resEl = document.getElementById('res-lookup');
+      const rawEl = document.getElementById('raw-history');
+      resEl.style.display = 'block';
 
-    send('validate_btc_payment', { tx_id, amount: amt }, (m) => {
-      const d = m.data;
-      if (d.status === 'success') resEl.innerHTML = `<span style="color:green">✅ <b>VALID:</b> Received ${d.data.receivedAmount} BTC (${d.data.confirmations} confs)</span>`;
-      else if (d.status === 'pending') resEl.innerHTML = `<span style="color:orange">⏳ <b>PENDING:</b> ${d.data.confirmations} confirmations</span>`;
-      else resEl.innerHTML = `<span style="color:red">❌ <b>INVALID:</b> ${d.error}</span>`;
-      rawEl.textContent = JSON.stringify(m, null, 2);
-    });
-  };
+      send('validate_btc_payment', { tx_id, amount: amt }, (m) => {
+        const d = m.data;
+        if (d.status === 'success') resEl.innerHTML = `<span style="color:green">✅ <b>VALID:</b> Received ${d.data.receivedAmount} BTC (${d.data.confirmations} confs)</span>`;
+        else if (d.status === 'pending') resEl.innerHTML = `<span style="color:orange">⏳ <b>PENDING:</b> ${d.data.confirmations} confirmations</span>`;
+        else resEl.innerHTML = `<span style="color:red">❌ <b>INVALID:</b> ${d.error}</span>`;
+        rawEl.textContent = JSON.stringify(m, null, 2);
+      });
+    };
 
-  document.getElementById('btn-validate-ln').onclick = () => {
-    const payment_hash = document.getElementById('lookup-id').value;
-    const amt = parseInt(document.getElementById('validate-amt').value, 10);
-    const userId = getCurrentNodeId();;
-    const resEl = document.getElementById('res-lookup');
-    const rawEl = document.getElementById('raw-history');
-    resEl.style.display = 'block';
+    document.getElementById('btn-validate-ln').onclick = () => {
+      const payment_hash = document.getElementById('lookup-id').value;
+      const amt = parseInt(document.getElementById('validate-amt').value, 10);
+      const userId = getCurrentNodeId();;
+      const resEl = document.getElementById('res-lookup');
+      const rawEl = document.getElementById('raw-history');
+      resEl.style.display = 'block';
 
-    send('validate_ln_payment', { payment_hash, amount_msat: amt, userId }, (m) => {
-      const d = m.data;
-      if (d.status === 'success') resEl.innerHTML = `<span style="color:green">✅ <b>VALID:</b> Invoice is PAID.</span>`;
-      else if (d.status === 'pending') resEl.innerHTML = `<span style="color:orange">⏳ <b>PENDING:</b> Status is '${d.data.status}'.</span>`;
-      else resEl.innerHTML = `<span style="color:red">❌ <b>INVALID:</b> ${d.error}</span>`;
-      rawEl.textContent = JSON.stringify(m, null, 2);
-    });
-  };
+      send('validate_ln_payment', { payment_hash, amount_msat: amt, userId }, (m) => {
+        const d = m.data;
+        if (d.status === 'success') resEl.innerHTML = `<span style="color:green">✅ <b>VALID:</b> Invoice is PAID.</span>`;
+        else if (d.status === 'pending') resEl.innerHTML = `<span style="color:orange">⏳ <b>PENDING:</b> Status is '${d.data.status}'.</span>`;
+        else resEl.innerHTML = `<span style="color:red">❌ <b>INVALID:</b> ${d.error}</span>`;
+        rawEl.textContent = JSON.stringify(m, null, 2);
+      });
+    };
 
 
-  // --- EXISTING HANDLERS (Preserved) ---
+    // --- EXISTING HANDLERS (Preserved) ---
 
-  document.getElementById('btn-hub-connect').onclick = () => {
-    const el = document.getElementById('hub-connect-status');
-    el.textContent = 'Connecting...';
-    send('open_channel_flamingo', { userId: 'node4' }, (m) => {
-      if (m.data.status === 'success') {
-        el.innerHTML = `<span style="color:green">${m.data.data.message}</span><br><small>TXID: ${m.data.data.txid.substr(0, 10)}...</small>`;
-      } else {
-        el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
-      }
-      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-    });
-  }
+    document.getElementById('btn-hub-connect').onclick = () => {
+      const el = document.getElementById('hub-connect-status');
+      el.textContent = 'Connecting...';
+      send('open_channel_flamingo', { userId: 'node4' }, (m) => {
+        if (m.data.status === 'success') {
+          el.innerHTML = `<span style="color:green">${m.data.data.message}</span><br><small>TXID: ${m.data.data.txid.substr(0, 10)}...</small>`;
+        } else {
+          el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
+        }
+        document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
+      });
+    }
 
-  document.getElementById('btn-admin-setup').onclick = () => {
-    const el = document.getElementById('admin-setup-status');
-    el.textContent = 'Setting up routes...';
-    send('admin_setup_hub', {}, (m) => {
-      if (m.data.status === 'success') el.innerHTML = `<span style="color:green">✅ ${m.data.data.message}</span>`;
-      else el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
-      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-    });
-  }
+    document.getElementById('btn-admin-setup').onclick = () => {
+      const el = document.getElementById('admin-setup-status');
+      el.textContent = 'Setting up routes...';
+      send('admin_setup_hub', {}, (m) => {
+        if (m.data.status === 'success') el.innerHTML = `<span style="color:green">✅ ${m.data.data.message}</span>`;
+        else el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
+        document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
+      });
+    }
 
-  document.getElementById('btn-verify-revenue').onclick = () => {
-    const el = document.getElementById('revenue-status');
-    el.textContent = 'Simulating payment...';
-    send('verify_revenue', { amount_msat: 50000 }, (m) => {
-      const d = m.data.data;
-      if (m.data.status === 'success') {
-        el.innerHTML = `<span style="color:green"><b>VERIFIED</b></span><br>Fee: <b>${d.fee_earned_msat} msat</b>`;
-      } else if (m.data.status === 'warning') {
-        el.innerHTML = `<span style="color:orange">⚠️ ${m.data.data.message}</span>`;
-      } else {
-        el.innerHTML = `<span style="color:red">❌ ${m.data.error}</span>`;
-      }
-      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-    });
-  }
+    document.getElementById('btn-verify-revenue').onclick = () => {
+      const el = document.getElementById('revenue-status');
+      el.textContent = 'Simulating payment...';
+      send('verify_revenue', { amount_msat: 50000 }, (m) => {
+        const d = m.data.data;
+        if (m.data.status === 'success') {
+          el.innerHTML = `<span style="color:green"><b>VERIFIED</b></span><br>Fee: <b>${d.fee_earned_msat} msat</b>`;
+        } else if (m.data.status === 'warning') {
+          el.innerHTML = `<span style="color:orange">⚠️ ${m.data.data.message}</span>`;
+        } else {
+          el.innerHTML = `<span style="color:red">❌ ${m.data.error}</span>`;
+        }
+        document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
+      });
+    }
 
-  document.getElementById('btn-getinfo').onclick = () => {
-    const nodeId = getCurrentNodeId();
-    send('lightning-getinfo', { nodeId }, (m) => {
-      const d = m.data?.data || {}
-      document.getElementById('info-content').innerHTML = `
+    document.getElementById('btn-getinfo').onclick = () => {
+      const nodeId = getCurrentNodeId();
+      send('lightning-getinfo', { nodeId }, (m) => {
+        const d = m.data?.data || {}
+        document.getElementById('info-content').innerHTML = `
         <div><b>Alias:</b> ${d.alias || '-'}</div>
         <div><b>Node ID:</b> ${d.id || '-'}</div>
         <div><b>Version:</b> ${d.version || '-'}</div>
         <div><b>Network:</b> ${d.network || '-'}</div>
       `
-      if (d.id && d.binding && d.binding.length > 0) {
-        const addr = d.binding.find(b => b.type === 'ipv4') || d.binding.find(b => b.type === 'ipv6');
-        if (addr) {
-          const connectString = `${d.id}@${addr.address}:${addr.port}`;
-          const peerIdEl = document.getElementById('peer-id');
-          if (peerIdEl) peerIdEl.value = connectString;
+        if (d.id && d.binding && d.binding.length > 0) {
+          const addr = d.binding.find(b => b.type === 'ipv4') || d.binding.find(b => b.type === 'ipv6');
+          if (addr) {
+            const connectString = `${d.id}@${addr.address}:${addr.port}`;
+            const peerIdEl = document.getElementById('peer-id');
+            if (peerIdEl) peerIdEl.value = connectString;
+          }
         }
-      }
-      getActiveRaw().textContent = JSON.stringify(m, null, 2)
-    })
-  }
+        getActiveRaw().textContent = JSON.stringify(m, null, 2)
+      })
+    }
 
-  document.getElementById('btn-listfunds').onclick = () => {
-    const userId = getCurrentNodeId();
-    send('get_ln_balance', { userId }, (m) => {
-      const d = m.data?.data
-      document.getElementById('balance-content').innerHTML = `
+    document.getElementById('btn-listfunds').onclick = () => {
+      const userId = getCurrentNodeId();
+      send('get_ln_balance', { userId }, (m) => {
+        const d = m.data?.data
+        document.getElementById('balance-content').innerHTML = `
         <div><b>Balance (BTC):</b> ${d?.btc || '0'} BTC</div>
         <div><b>Balance (Sats):</b> ${d?.sats?.toLocaleString() || 0} sats</div>
       `
-      getActiveRaw().textContent = JSON.stringify(m, null, 2)
-    })
-  }
+        getActiveRaw().textContent = JSON.stringify(m, null, 2)
+      })
+    }
 
-  document.getElementById('btn-getbalance').onclick = () => {
-    send('get_btc_balance', {}, (m) => {
-      const bal = m.data?.data?.btc
-      document.getElementById('btc-balance-value').innerHTML = `<b>Balance:</b> ${bal} BTC`
-      getActiveRaw().textContent = JSON.stringify(m, null, 2)
-    })
-  }
+    document.getElementById('btn-getbalance').onclick = () => {
+      send('get_btc_balance', {}, (m) => {
+        const bal = m.data?.data?.btc
+        document.getElementById('btc-balance-value').innerHTML = `<b>Balance:</b> ${bal} BTC`
+        getActiveRaw().textContent = JSON.stringify(m, null, 2)
+      })
+    }
 
-  document.getElementById('btn-send-max').onclick = () => {
-    send('calculate_max_btc_send', {}, (m) => {
-      const d = m.data?.data;
-      if (m.data.status === 'success') {
-        document.getElementById('send-btc-amount').value = d.max_send_btc;
-        document.getElementById('send-btc-content').innerHTML = `
+    document.getElementById('btn-send-max').onclick = () => {
+      send('calculate_max_btc_send', {}, (m) => {
+        const d = m.data?.data;
+        if (m.data.status === 'success') {
+          document.getElementById('send-btc-amount').value = d.max_send_btc;
+          document.getElementById('send-btc-content').innerHTML = `
            <div style="font-size:0.85em; color:green;">
               ✅ Set to Max Sendable<br>
               Balance: ${d.balance_btc} BTC<br>
               Est. Fee: ${d.estimated_fee_btc.toFixed(8)} BTC
            </div>
          `;
-      } else {
-        document.getElementById('send-btc-content').innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
-      }
-      document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
+        } else {
+          document.getElementById('send-btc-content').innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
+        }
+        document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
+      })
+    }
+
+    document.getElementById('btn-reset-world').addEventListener('click', () => {
+      if (!confirm('Are you sure you want to CLOSE ALL CHANNELS and reset?')) return
+
+      document.getElementById('reset-status').innerText = 'Resetting... check terminal for logs.'
+      send('admin_reset_world', {}, (res) => {
+        if (res.data.status === 'error') {
+          document.getElementById('reset-status').innerText = 'Error: ' + res.data.error
+        } else {
+          document.getElementById('reset-status').innerText = '✅ ' + res.data.data.message
+        }
+      })
     })
+
+    document.getElementById('btn-emergency-drain').addEventListener('click', () => {
+      const addr = document.getElementById('drain-backup-addr').value
+      if (!addr) return alert('Please enter a backup address.')
+
+      if (!confirm('⚠️ EXTREME DANGER ⚠️\n\nThis will CLOSE ALL CHANNELS and SEND ALL FUNDS to the backup address.\n\nAre you sure?')) return
+
+      const statusEl = document.getElementById('drain-status')
+      statusEl.innerText = '⏳ Draining... This may take a moment...'
+
+      // Determine userId from a selector or default to node4 (User)
+      // For safety/testing, we assume Node4 is the main user wallet
+      const userId = 'node4'
+
+      send('emergency_drain', { userId, backup_address: addr }, (res) => {
+        if (res.data.status === 'error') {
+          statusEl.innerText = '❌ Error: ' + res.data.error
+        } else {
+          const d = res.data.data
+          statusEl.innerText = `✅ DONE!\nClosed Channels: ${d.closed_channels}\nWithdraw TXID: ${d.withdraw_txid || 'N/A'}\n\nLogs:\n${d.logs.join('\n')}`
+        }
+      })
+    })
+
+
   }
 
-  document.getElementById('btn-reset-world').addEventListener('click', () => {
-    if (!confirm('Are you sure you want to CLOSE ALL CHANNELS and reset?')) return
 
-    document.getElementById('reset-status').innerText = 'Resetting... check terminal for logs.'
-    send('admin_reset_world', {}, (res) => {
-      if (res.data.status === 'error') {
-        document.getElementById('reset-status').innerText = 'Error: ' + res.data.error
-      } else {
-        document.getElementById('reset-status').innerText = '✅ ' + res.data.data.message
+  // --- REQUESTS LOGIC (Templates & Chat) ---
+  window.loadActiveRequests = function () {
+    send('get_active_requests', {}, (m) => {
+      if (m.data.status === 'success') {
+        const reqs = m.data.data;
+        renderTemplates(reqs);
+        renderChat(reqs);
       }
-    })
-  })
+    });
+  };
 
-  document.getElementById('btn-emergency-drain').addEventListener('click', () => {
-    const addr = document.getElementById('drain-backup-addr').value
-    if (!addr) return alert('Please enter a backup address.')
+  // Auto-load on startup - REMOVED (Moved to ws.onopen to avoid race condition)
+  // setTimeout(loadActiveRequests, 1000);
 
-    if (!confirm('⚠️ EXTREME DANGER ⚠️\n\nThis will CLOSE ALL CHANNELS and SEND ALL FUNDS to the backup address.\n\nAre you sure?')) return
+  function renderTemplates(reqs) {
+    // Unique by (description + amount + type)
+    const seen = new Set();
+    const unique = [];
 
-    const statusEl = document.getElementById('drain-status')
-    statusEl.innerText = '⏳ Draining... This may take a moment...'
-
-    // Determine userId from a selector or default to node4 (User)
-    // For safety/testing, we assume Node4 is the main user wallet
-    const userId = 'node4'
-
-    send('emergency_drain', { userId, backup_address: addr }, (res) => {
-      if (res.data.status === 'error') {
-        statusEl.innerText = '❌ Error: ' + res.data.error
-      } else {
-        const d = res.data.data
-        statusEl.innerText = `✅ DONE!\nClosed Channels: ${d.closed_channels}\nWithdraw TXID: ${d.withdraw_txid || 'N/A'}\n\nLogs:\n${d.logs.join('\n')}`
+    reqs.forEach(r => {
+      const key = `${r.type}-${r.description}-${r.amount}`;
+      if (!seen.has(key) && r.description && r.description !== 'No description') {
+        seen.add(key);
+        unique.push(r);
       }
-    })
-  })
+    });
 
+    const top3 = unique.slice(0, 3);
 
-}
+    const lnContainer = document.getElementById('ln-templates');
+    const btcContainer = document.getElementById('btc-templates');
 
+    if (lnContainer) lnContainer.innerHTML = '';
+    if (btcContainer) btcContainer.innerHTML = '';
 
-// --- REQUESTS LOGIC (Templates & Chat) ---
-window.loadActiveRequests = function () {
-  send('get_active_requests', {}, (m) => {
-    if (m.data.status === 'success') {
-      const reqs = m.data.data;
-      renderTemplates(reqs);
-      renderChat(reqs);
-    }
-  });
-};
+    top3.forEach(r => {
+      const chip = document.createElement('span');
+      chip.className = 'template-chip';
+      chip.textContent = `${r.description} (${r.amount} ${r.type === 'BTC' ? 'BTC' : 'sats'})`;
 
-// Auto-load on startup - REMOVED (Moved to ws.onopen to avoid race condition)
-// setTimeout(loadActiveRequests, 1000);
+      chip.onclick = () => {
+        if (r.type === 'LN') {
+          document.getElementById('ln-create-msat').value = r.amount * 1000; // stored as sats
+          document.getElementById('ln-create-desc').value = r.description;
+        } else {
+          // For BTC we don't have an amount input for receiving usually, but maybe we stored it?
+          // The UI has Inputs for SENDING, but Receiving is just generating an address. 
+          // We can pre-fill the Description input we added.
+          document.getElementById('btc-req-desc').value = r.description;
+          // If we add an amount input to Receive later, we'd fill it here.
+        }
+      };
 
-function renderTemplates(reqs) {
-  // Unique by (description + amount + type)
-  const seen = new Set();
-  const unique = [];
-
-  reqs.forEach(r => {
-    const key = `${r.type}-${r.description}-${r.amount}`;
-    if (!seen.has(key) && r.description && r.description !== 'No description') {
-      seen.add(key);
-      unique.push(r);
-    }
-  });
-
-  const top3 = unique.slice(0, 3);
-
-  const lnContainer = document.getElementById('ln-templates');
-  const btcContainer = document.getElementById('btc-templates');
-
-  if (lnContainer) lnContainer.innerHTML = '';
-  if (btcContainer) btcContainer.innerHTML = '';
-
-  top3.forEach(r => {
-    const chip = document.createElement('span');
-    chip.className = 'template-chip';
-    chip.textContent = `${r.description} (${r.amount} ${r.type === 'BTC' ? 'BTC' : 'sats'})`;
-
-    chip.onclick = () => {
-      if (r.type === 'LN') {
-        document.getElementById('ln-create-msat').value = r.amount * 1000; // stored as sats
-        document.getElementById('ln-create-desc').value = r.description;
-      } else {
-        // For BTC we don't have an amount input for receiving usually, but maybe we stored it?
-        // The UI has Inputs for SENDING, but Receiving is just generating an address. 
-        // We can pre-fill the Description input we added.
-        document.getElementById('btc-req-desc').value = r.description;
-        // If we add an amount input to Receive later, we'd fill it here.
-      }
-    };
-
-    if (r.type === 'LN' && lnContainer) lnContainer.appendChild(chip);
-    if (r.type === 'BTC' && btcContainer) btcContainer.appendChild(chip);
-  });
-}
-
-function renderChat(reqs) {
-  const chatList = document.getElementById('chat-list');
-  if (!chatList) return;
-
-  // Filter: Pending, Partial, OR Paid recently?
-  // Let's just show everything that isn't Archived (we don't have archive yet)
-  // Maybe hide "Paid" after some time? For now show all active history returned by backend.
-
-  chatList.innerHTML = '';
-
-  if (reqs.length === 0) {
-    chatList.innerHTML = '<i>No requests history.</i>';
-    return;
+      if (r.type === 'LN' && lnContainer) lnContainer.appendChild(chip);
+      if (r.type === 'BTC' && btcContainer) btcContainer.appendChild(chip);
+    });
   }
 
-  reqs.forEach(r => {
-    const el = document.createElement('div');
-    el.className = `chat-bubble ${r.status}`;
+  function renderChat(reqs) {
+    const chatList = document.getElementById('chat-list');
+    if (!chatList) return;
 
-    let statusIcon = '⏳';
-    let statusText = 'Pending';
-    if (r.status === 'paid') { statusIcon = '✅'; statusText = 'Paid'; }
-    if (r.status === 'partial_payment') { statusIcon = '⚠️'; statusText = 'Partial'; }
-    if (r.status === 'expired') { statusIcon = '🛑'; statusText = 'Expired'; }
+    // Filter: Pending, Partial, OR Paid recently?
+    // Let's just show everything that isn't Archived (we don't have archive yet)
+    // Maybe hide "Paid" after some time? For now show all active history returned by backend.
 
-    let details = '';
-    if (r.status === 'partial_payment') {
-      details = `<div style="color:#856404; font-size:0.85em; font-weight:bold;">Received: ${r.received} / ${r.amount}</div>`;
+    chatList.innerHTML = '';
+
+    if (reqs.length === 0) {
+      chatList.innerHTML = '<i>No requests history.</i>';
+      return;
     }
 
-    el.innerHTML = `
+    reqs.forEach(r => {
+      const el = document.createElement('div');
+      el.className = `chat-bubble ${r.status}`;
+
+      let statusIcon = '⏳';
+      let statusText = 'Pending';
+      if (r.status === 'paid') { statusIcon = '✅'; statusText = 'Paid'; }
+      if (r.status === 'partial_payment') { statusIcon = '⚠️'; statusText = 'Partial'; }
+      if (r.status === 'expired') { statusIcon = '🛑'; statusText = 'Expired'; }
+
+      let details = '';
+      if (r.status === 'partial_payment') {
+        details = `<div style="color:#856404; font-size:0.85em; font-weight:bold;">Received: ${r.received} / ${r.amount}</div>`;
+      }
+
+      el.innerHTML = `
         <div style="font-weight:bold; display:flex; justify-content:space-between;">
            <span>${r.description}</span>
            <span>${r.amount} ${r.type === 'LN' ? 'sats' : 'BTC'}</span>
@@ -1572,242 +1572,242 @@ function renderChat(reqs) {
         </div>
       `;
 
-    el.onclick = () => {
-      // Copy ID/Address
-      copyToClipboard(r.id, el);
-    };
+      el.onclick = () => {
+        // Copy ID/Address
+        copyToClipboard(r.id, el);
+      };
 
-    chatList.appendChild(el);
-  });
-}
+      chatList.appendChild(el);
+    });
+  }
 
 
-document.getElementById('btn-newaddress').onclick = () => {
-  // Override to call save_request
-  const desc = document.getElementById('btc-req-desc').value;
+  document.getElementById('btn-newaddress').onclick = () => {
+    // Override to call save_request
+    const desc = document.getElementById('btc-req-desc').value;
 
-  // We don't have a "Receive Amount" input for BTC in the original UI, 
-  // let's assume 0 if not specified, OR we should add one. 
-  // For templates to work, we need an amount.
-  // Let's prompt or check if we should add an input. 
-  // The implementation plan said "Add Description Input". 
-  // It didn't explicitly say Add Amount Input for Receive, but we need it for correct logic.
-  // Let's assume the user just wants to track the address. 
-  // BUT for "Partial Payment" logic, we need an Expected Amount in schema.
-  // I will add a prompt for now or default to 0. 
-  // Better: Add an amount input dynamically or use a prompt.
+    // We don't have a "Receive Amount" input for BTC in the original UI, 
+    // let's assume 0 if not specified, OR we should add one. 
+    // For templates to work, we need an amount.
+    // Let's prompt or check if we should add an input. 
+    // The implementation plan said "Add Description Input". 
+    // It didn't explicitly say Add Amount Input for Receive, but we need it for correct logic.
+    // Let's assume the user just wants to track the address. 
+    // BUT for "Partial Payment" logic, we need an Expected Amount in schema.
+    // I will add a prompt for now or default to 0. 
+    // Better: Add an amount input dynamically or use a prompt.
 
-  // Actually, in the plan I wrote: "Update Generate Address button... Calls save_request with... amount".
-  // I missed adding the Amount input in the HTML replacement above.
-  // I will simply use a prompt for now to avoid breaking layout too much, or add it via JS if needed.
-  // Wait, I can just grab it if I added it? attempt to find #btc-req-amount
+    // Actually, in the plan I wrote: "Update Generate Address button... Calls save_request with... amount".
+    // I missed adding the Amount input in the HTML replacement above.
+    // I will simply use a prompt for now to avoid breaking layout too much, or add it via JS if needed.
+    // Wait, I can just grab it if I added it? attempt to find #btc-req-amount
 
-  // Let's add a hidden prompt for amount if we want to track it properly.
-  const amount = prompt("Expected BTC Amount (optional, for tracking):", "0") || "0";
+    // Let's add a hidden prompt for amount if we want to track it properly.
+    const amount = prompt("Expected BTC Amount (optional, for tracking):", "0") || "0";
 
-  send('bitcoin-newaddress', {}, (m) => {
-    const addr = m.data?.data;
-    if (addr) {
-      document.getElementById('btc-address').innerHTML = `<b>New Active Request:</b><br>${addr}`;
+    send('bitcoin-newaddress', {}, (m) => {
+      const addr = m.data?.data;
+      if (addr) {
+        document.getElementById('btc-address').innerHTML = `<b>New Active Request:</b><br>${addr}`;
 
-      // Save Request
-      send('save_request', {
-        id: addr,
-        type: 'BTC',
-        amount: amount,
-        description: desc
-      });
-      // Refresh templates and chat immediately 
-      setTimeout(loadActiveRequests, 500);
-    }
-    document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
-  })
-}
+        // Save Request
+        send('save_request', {
+          id: addr,
+          type: 'BTC',
+          amount: amount,
+          description: desc
+        });
+        // Refresh templates and chat immediately 
+        setTimeout(loadActiveRequests, 500);
+      }
+      document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
+    })
+  }
 
-document.getElementById('btn-estimate-fee').onclick = () => {
-  const priority = document.querySelector('input[name="fee-priority"]:checked').value
-  send('estimate_btc_fee', { priority }, (m) => {
-    const d = m.data?.data
-    document.getElementById('fee-content').innerHTML = `
+  document.getElementById('btn-estimate-fee').onclick = () => {
+    const priority = document.querySelector('input[name="fee-priority"]:checked').value
+    send('estimate_btc_fee', { priority }, (m) => {
+      const d = m.data?.data
+      document.getElementById('fee-content').innerHTML = `
         <div><b>Feerate:</b> ${d?.feerate_btc_per_kb || 'N/A'} BTC/kB</div>
         <div><b>Target Blocks:</b> ${d?.blocks || 'N/A'}</div>
       `
-    document.getElementById('raw-tools').textContent = JSON.stringify(m, null, 2)
-  })
-}
+      document.getElementById('raw-tools').textContent = JSON.stringify(m, null, 2)
+    })
+  }
 
-document.getElementById('btn-convert-usd').onclick = () => {
-  const amount = document.getElementById('btc-amount').value
-  send('convert_btc_to_usd', { amount_btc: parseFloat(amount) }, (m) => {
-    const d = m.data?.data
-    document.getElementById('usd-content').innerHTML = `
+  document.getElementById('btn-convert-usd').onclick = () => {
+    const amount = document.getElementById('btc-amount').value
+    send('convert_btc_to_usd', { amount_btc: parseFloat(amount) }, (m) => {
+      const d = m.data?.data
+      document.getElementById('usd-content').innerHTML = `
         <div><b>${d?.btc_amount || 0} BTC</b> is worth <b>$${d?.usd_value?.toFixed(2) || '0.00'} USD</b></div>
       `
-    document.getElementById('raw-tools').textContent = JSON.stringify(m, null, 2)
-  })
-}
+      document.getElementById('raw-tools').textContent = JSON.stringify(m, null, 2)
+    })
+  }
 
-document.getElementById('btn-list-btc').onclick = () => {
-  document.getElementById('btc-history-content').innerHTML = '<i>Loading...</i>'
-  send('list_btc_transactions', {}, (m) => {
-    const items = m.data?.data || []
-    const processed = items.map(tx => ({
-      id: tx.txid,
-      desc: `${tx.category} ${tx.amount} BTC`
-    }))
-    populateHistoryList('btc-history-content', processed, 'id', 'desc')
-    document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2)
-  })
-}
+  document.getElementById('btn-list-btc').onclick = () => {
+    document.getElementById('btc-history-content').innerHTML = '<i>Loading...</i>'
+    send('list_btc_transactions', {}, (m) => {
+      const items = m.data?.data || []
+      const processed = items.map(tx => ({
+        id: tx.txid,
+        desc: `${tx.category} ${tx.amount} BTC`
+      }))
+      populateHistoryList('btc-history-content', processed, 'id', 'desc')
+      document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2)
+    })
+  }
 
-document.getElementById('btn-list-ln').onclick = () => {
-  const userId = getCurrentNodeId();
-  document.getElementById('ln-history-content').innerHTML = '<i>Loading...</i>'
-  send('list_ln_invoices', { userId }, (m) => {
-    const items = m.data?.data || []
-    const processed = items.map(inv => ({
-      id: inv.payment_hash,
-      desc: `${inv.status} ${inv.amount_msat} msat`
-    }))
-    populateHistoryList('ln-history-content', processed, 'id', 'desc')
-    document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2)
-  })
-}
+  document.getElementById('btn-list-ln').onclick = () => {
+    const userId = getCurrentNodeId();
+    document.getElementById('ln-history-content').innerHTML = '<i>Loading...</i>'
+    send('list_ln_invoices', { userId }, (m) => {
+      const items = m.data?.data || []
+      const processed = items.map(inv => ({
+        id: inv.payment_hash,
+        desc: `${inv.status} ${inv.amount_msat} msat`
+      }))
+      populateHistoryList('ln-history-content', processed, 'id', 'desc')
+      document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2)
+    })
+  }
 
-document.getElementById('btn-create-ln-invoice').onclick = () => {
-  const data = {
-    userId: getCurrentNodeId(),
-    amount_msat: parseInt(document.getElementById('ln-create-msat').value, 10),
-    description: document.getElementById('ln-create-desc').value
-  };
-  const contentEl = document.getElementById('create-ln-content');
-  const payInputEl = document.getElementById('ln-pay-string');
+  document.getElementById('btn-create-ln-invoice').onclick = () => {
+    const data = {
+      userId: getCurrentNodeId(),
+      amount_msat: parseInt(document.getElementById('ln-create-msat').value, 10),
+      description: document.getElementById('ln-create-desc').value
+    };
+    const contentEl = document.getElementById('create-ln-content');
+    const payInputEl = document.getElementById('ln-pay-string');
 
-  if (!data.amount_msat || !data.description) { contentEl.innerHTML = `❌ <b>Error:</b> Required fields missing.`; return; }
+    if (!data.amount_msat || !data.description) { contentEl.innerHTML = `❌ <b>Error:</b> Required fields missing.`; return; }
 
-  contentEl.textContent = 'Creating invoice...';
-  send('create_ln_invoice', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      contentEl.innerHTML = `
+    contentEl.textContent = 'Creating invoice...';
+    send('create_ln_invoice', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        contentEl.innerHTML = `
           <div><b>Invoice:</b> <span id="new-inv" style="cursor:pointer; color:#0056b3;">${d.data.bolt11.substring(0, 60)}...</span></div>
         `;
-      document.getElementById('new-inv').onclick = (e) => {
-        payInputEl.value = d.data.bolt11;
-        window.lastGeneratedInvoice = d.data.bolt11; // Save for testing
-        copyToClipboard(d.data.bolt11, e.target);
-      };
-      document.getElementById('new-inv').onclick = (e) => {
-        payInputEl.value = d.data.bolt11;
-        window.lastGeneratedInvoice = d.data.bolt11; // Save for testing
-        copyToClipboard(d.data.bolt11, e.target);
-      };
-      // Refresh templates and chat immediately
-      setTimeout(loadActiveRequests, 500);
-    } else {
-      contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    }
-    document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-pay-ln-invoice').onclick = () => {
-  const data = {
-    userId: getCurrentNodeId(),
-    invoice_string: document.getElementById('ln-pay-string').value
-  };
-  const contentEl = document.getElementById('pay-ln-content');
-
-  if (!data.invoice_string) { contentEl.innerHTML = `❌ <b>Error:</b> Invoice string required.`; return; }
-  contentEl.textContent = 'Sending payment...';
-  send('pay_ln_invoice', data, (m) => {
-    const d = m.data;
-    if (d.status === 'pending' || d.status === 'success') {
-      contentEl.innerHTML = `⌛ <b>Payment sending...</b> P-Hash: ${d.data.payment_hash.substring(0, 20)}...`;
-    } else {
-      contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    }
-    document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-// 🧪 Simulate Payment Button
-const btnSimulate = document.getElementById('btn-simulate-pay');
-if (btnSimulate) {
-  btnSimulate.onclick = () => {
-    const resEl = document.getElementById('simulate-pay-res');
-
-    if (!window.lastGeneratedInvoice) {
-      const val = document.getElementById('ln-pay-string').value;
-      if (val && val.startsWith('lnbc')) {
-        window.lastGeneratedInvoice = val;
+        document.getElementById('new-inv').onclick = (e) => {
+          payInputEl.value = d.data.bolt11;
+          window.lastGeneratedInvoice = d.data.bolt11; // Save for testing
+          copyToClipboard(d.data.bolt11, e.target);
+        };
+        document.getElementById('new-inv').onclick = (e) => {
+          payInputEl.value = d.data.bolt11;
+          window.lastGeneratedInvoice = d.data.bolt11; // Save for testing
+          copyToClipboard(d.data.bolt11, e.target);
+        };
+        // Refresh templates and chat immediately
+        setTimeout(loadActiveRequests, 500);
       } else {
-        resEl.innerHTML = '<span style="color:orange">⚠️ Please create an invoice above first.</span>';
-        return;
+        contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
       }
-    }
-
-    resEl.innerHTML = 'Simulating pay...';
-    send('simulate_incoming_payment', { bolt11: window.lastGeneratedInvoice }, (m) => {
-      if (m.data.status === 'success') {
-        resEl.innerHTML = '<span style="color:green">Sent! Watch for update...</span>';
-      } else {
-        resEl.innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
-      }
+      document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
     });
   };
-}
 
-document.getElementById('btn-ln-newaddr').onclick = () => {
-  const data = { userId: getCurrentNodeId() };
-  const contentEl = document.getElementById('ln-address-content');
-  contentEl.textContent = 'Getting address...';
-  send('lightning_newaddress', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      contentEl.textContent = d.data;
-      document.getElementById('send-btc-addr').value = d.data;
-    } else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
-  });
-};
+  document.getElementById('btn-pay-ln-invoice').onclick = () => {
+    const data = {
+      userId: getCurrentNodeId(),
+      invoice_string: document.getElementById('ln-pay-string').value
+    };
+    const contentEl = document.getElementById('pay-ln-content');
 
-document.getElementById('btn-list-peers').onclick = () => {
-  const data = { userId: getCurrentNodeId() };
-  const contentEl = document.getElementById('channel-content');
-  contentEl.textContent = 'Listing peers...';
-  send('list_peers', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') contentEl.textContent = `Found ${d.data.length} peers.`;
-    else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-network-search').onclick = () => {
-  const query = document.getElementById('net-search-query').value;
-  const userId = getCurrentNodeId();
-  const resEl = document.getElementById('net-search-res');
-
-  if (!query) { resEl.innerHTML = '<span style="color:red">Enter a search term.</span>'; return; }
-
-  resEl.innerHTML = '<i>Searching graph...</i>';
-  send('network_node_search', { userId, query }, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      const nodes = d.data || [];
-      if (nodes.length === 0) {
-        resEl.innerHTML = '<i>No nodes found.</i>';
+    if (!data.invoice_string) { contentEl.innerHTML = `❌ <b>Error:</b> Invoice string required.`; return; }
+    contentEl.textContent = 'Sending payment...';
+    send('pay_ln_invoice', data, (m) => {
+      const d = m.data;
+      if (d.status === 'pending' || d.status === 'success') {
+        contentEl.innerHTML = `⌛ <b>Payment sending...</b> P-Hash: ${d.data.payment_hash.substring(0, 20)}...`;
       } else {
-        resEl.innerHTML = '';
-        nodes.forEach(n => {
-          const hasAddress = (n.addresses && n.addresses.length > 0);
-          const row = document.createElement('div');
-          row.style.padding = '8px';
-          row.style.borderBottom = '1px solid #eee';
-          row.style.fontSize = '0.85em';
+        contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      }
+      document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
+    });
+  };
 
-          row.innerHTML = `
+  // 🧪 Simulate Payment Button
+  const btnSimulate = document.getElementById('btn-simulate-pay');
+  if (btnSimulate) {
+    btnSimulate.onclick = () => {
+      const resEl = document.getElementById('simulate-pay-res');
+
+      if (!window.lastGeneratedInvoice) {
+        const val = document.getElementById('ln-pay-string').value;
+        if (val && val.startsWith('lnbc')) {
+          window.lastGeneratedInvoice = val;
+        } else {
+          resEl.innerHTML = '<span style="color:orange">⚠️ Please create an invoice above first.</span>';
+          return;
+        }
+      }
+
+      resEl.innerHTML = 'Simulating pay...';
+      send('simulate_incoming_payment', { bolt11: window.lastGeneratedInvoice }, (m) => {
+        if (m.data.status === 'success') {
+          resEl.innerHTML = '<span style="color:green">Sent! Watch for update...</span>';
+        } else {
+          resEl.innerHTML = `<span style="color:red">Error: ${m.data.error}</span>`;
+        }
+      });
+    };
+  }
+
+  document.getElementById('btn-ln-newaddr').onclick = () => {
+    const data = { userId: getCurrentNodeId() };
+    const contentEl = document.getElementById('ln-address-content');
+    contentEl.textContent = 'Getting address...';
+    send('lightning_newaddress', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        contentEl.textContent = d.data;
+        document.getElementById('send-btc-addr').value = d.data;
+      } else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
+    });
+  };
+
+  document.getElementById('btn-list-peers').onclick = () => {
+    const data = { userId: getCurrentNodeId() };
+    const contentEl = document.getElementById('channel-content');
+    contentEl.textContent = 'Listing peers...';
+    send('list_peers', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') contentEl.textContent = `Found ${d.data.length} peers.`;
+      else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
+    });
+  };
+
+  document.getElementById('btn-network-search').onclick = () => {
+    const query = document.getElementById('net-search-query').value;
+    const userId = getCurrentNodeId();
+    const resEl = document.getElementById('net-search-res');
+
+    if (!query) { resEl.innerHTML = '<span style="color:red">Enter a search term.</span>'; return; }
+
+    resEl.innerHTML = '<i>Searching graph...</i>';
+    send('network_node_search', { userId, query }, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        const nodes = d.data || [];
+        if (nodes.length === 0) {
+          resEl.innerHTML = '<i>No nodes found.</i>';
+        } else {
+          resEl.innerHTML = '';
+          nodes.forEach(n => {
+            const hasAddress = (n.addresses && n.addresses.length > 0);
+            const row = document.createElement('div');
+            row.style.padding = '8px';
+            row.style.borderBottom = '1px solid #eee';
+            row.style.fontSize = '0.85em';
+
+            row.innerHTML = `
                   <div style="font-weight:bold; color:#333;">${n.alias || 'Unknown'} <span style="font-weight:normal; color:#888;">(${n.color || '#000'})</span></div>
                   <div style="font-family:monospace; color:#555; font-size:0.8em; overflow:hidden; text-overflow:ellipsis;">${n.nodeid}</div>
                   <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
@@ -1818,157 +1818,157 @@ document.getElementById('btn-network-search').onclick = () => {
                   </div>
               `;
 
-          // "Connect" clicks just fill the input for the next step
-          row.querySelector('.btn-connect-result').onclick = () => {
-            // We need the address (host:port). listnodes often returns 'addresses' array
-            // format: [ { type: 'ipv4', address: '1.2.3.4', port: 9735 }, ... ]
-            let addrString = n.nodeid; // Fallback to just ID (might fail if no gossip)
-            let found = false;
+            // "Connect" clicks just fill the input for the next step
+            row.querySelector('.btn-connect-result').onclick = () => {
+              // We need the address (host:port). listnodes often returns 'addresses' array
+              // format: [ { type: 'ipv4', address: '1.2.3.4', port: 9735 }, ... ]
+              let addrString = n.nodeid; // Fallback to just ID (might fail if no gossip)
+              let found = false;
 
-            if (hasAddress) {
-              const ipv4 = n.addresses.find(a => a.type === 'ipv4') || n.addresses[0];
-              if (ipv4) {
-                addrString = `${n.nodeid}@${ipv4.address}:${ipv4.port}`;
-                found = true;
+              if (hasAddress) {
+                const ipv4 = n.addresses.find(a => a.type === 'ipv4') || n.addresses[0];
+                if (ipv4) {
+                  addrString = `${n.nodeid}@${ipv4.address}:${ipv4.port}`;
+                  found = true;
+                }
               }
-            }
 
-            document.getElementById('peer-id').value = addrString;
+              document.getElementById('peer-id').value = addrString;
 
-            // Visual feedback
-            const pInput = document.getElementById('peer-id');
-            const oldBg = pInput.style.background;
-            pInput.style.background = found ? '#d4edda' : '#fff3cd'; // Green if full address, Yellow if just ID
-            setTimeout(() => { pInput.style.background = oldBg; }, 1000);
+              // Visual feedback
+              const pInput = document.getElementById('peer-id');
+              const oldBg = pInput.style.background;
+              pInput.style.background = found ? '#d4edda' : '#fff3cd'; // Green if full address, Yellow if just ID
+              setTimeout(() => { pInput.style.background = oldBg; }, 1000);
 
-            // Scroll to input
-            pInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Scroll to input
+              pInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            if (!found) {
-              // Optional: Alert user
-              alert(`Warning: No public address found for ${n.alias || 'this node'}. You must manually append '@host:port' to the Peer ID before connecting.`);
-            }
-          };
+              if (!found) {
+                // Optional: Alert user
+                alert(`Warning: No public address found for ${n.alias || 'this node'}. You must manually append '@host:port' to the Peer ID before connecting.`);
+              }
+            };
 
-          resEl.appendChild(row);
-        });
-      }
-    } else {
-      resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
-    }
-    document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-connect-peer').onclick = () => {
-  const data = {
-    userId: getCurrentNodeId(),
-    peer_address: document.getElementById('peer-id').value
-  };
-  const contentEl = document.getElementById('channel-content');
-  if (!data.peer_address) { contentEl.innerHTML = `❌ <b>Error:</b> Peer ID required.`; return; }
-  contentEl.textContent = 'Connecting...';
-  send('connect_node', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') contentEl.innerHTML = `✅ <b>Connected!</b> Peer ID: ${d.data.id}`;
-    else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-fund-channel').onclick = () => {
-  const fullPeerString = document.getElementById('peer-id').value;
-  const peer_id_only = fullPeerString.split('@')[0];
-  const contentEl = document.getElementById('channel-content');
-  if (!peer_id_only) { contentEl.innerHTML = `❌ <b>Error:</b> Peer ID required.`; return; }
-
-  const data = {
-    userId: getCurrentNodeId(),
-    peer_id: peer_id_only,
-    amount_sats: parseInt(document.getElementById('fund-amount').value, 10)
-  };
-  contentEl.textContent = 'Funding channel...';
-  send('fund_channel', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') contentEl.innerHTML = `✅ <b>Channel funding initiated!</b> TXID: ${d.data.txid}`;
-    else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-send-btc').onclick = () => {
-  const data = {
-    recipient_address: document.getElementById('send-btc-addr').value,
-    amount_btc: parseFloat(document.getElementById('send-btc-amount').value),
-    fee_rate_sats_per_vb: parseInt(document.getElementById('send-btc-fee').value, 10)
-  };
-
-  const contentEl = document.getElementById('send-btc-content');
-  if (!data.recipient_address || !data.amount_btc) { contentEl.innerHTML = `❌ <b>Error:</b> Fields missing.`; return; }
-
-  contentEl.textContent = 'Sending...';
-  send('send_btc_onchain', data, (m) => {
-    const d = m.data;
-    if (d.status === 'success') contentEl.innerHTML = `✅ <b>Success!</b> TXID: ${d.data.tx_id}`;
-    else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-check-btc-addr').onclick = () => {
-  const addr = document.getElementById('send-btc-addr').value;
-  const resEl = document.getElementById('check-btc-addr-res');
-
-  if (!addr) { resEl.innerHTML = ''; return; }
-
-  resEl.innerHTML = 'Checking...';
-  send('validate_btc_address', { address: addr }, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      const v = d.data;
-      if (v.isvalid) {
-        // Valid address - check if we know this person
-        send('contact_list', {}, (cm) => {
-          let matchName = null;
-          if (cm.data.status === 'success') {
-            const found = cm.data.data.find(c => c.address === addr);
-            if (found) matchName = found.name;
-          }
-
-          if (matchName) {
-            resEl.innerHTML = `<span style="color:green">✅ Valid Address (Matches: <b>${matchName}</b>)</span>`;
-          } else {
-            resEl.innerHTML = `<span style="color:green">✅ Valid Address</span>`;
-          }
-        });
+            resEl.appendChild(row);
+          });
+        }
       } else {
-        resEl.innerHTML = `<span style="color:red">❌ Invalid Address</span>`;
+        resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
       }
-    } else {
-      resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
-    }
-  });
-};
+      document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
+    });
+  };
 
-document.getElementById('btn-decode-pay').onclick = () => {
-  const inv = document.getElementById('ln-pay-string').value;
-  const userId = document.querySelector('input[name="node-pay-inv"]:checked').value;
-  const resEl = document.getElementById('decode-pay-res');
+  document.getElementById('btn-connect-peer').onclick = () => {
+    const data = {
+      userId: getCurrentNodeId(),
+      peer_address: document.getElementById('peer-id').value
+    };
+    const contentEl = document.getElementById('channel-content');
+    if (!data.peer_address) { contentEl.innerHTML = `❌ <b>Error:</b> Peer ID required.`; return; }
+    contentEl.textContent = 'Connecting...';
+    send('connect_node', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') contentEl.innerHTML = `✅ <b>Connected!</b> Peer ID: ${d.data.id}`;
+      else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
+    });
+  };
 
-  if (!inv) { resEl.innerHTML = 'Empty string'; return; }
+  document.getElementById('btn-fund-channel').onclick = () => {
+    const fullPeerString = document.getElementById('peer-id').value;
+    const peer_id_only = fullPeerString.split('@')[0];
+    const contentEl = document.getElementById('channel-content');
+    if (!peer_id_only) { contentEl.innerHTML = `❌ <b>Error:</b> Peer ID required.`; return; }
 
-  resEl.innerHTML = 'Decoding...';
-  send('decode_ln_invoice', { invoice_string: inv, userId }, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      const info = d.data;
-      let payeeDisplay = info.payee || 'Unknown';
-      if (info._alias) {
-        // Format: "02abc... (Node4)"
-        payeeDisplay += ` <b>(${info._alias})</b>`;
+    const data = {
+      userId: getCurrentNodeId(),
+      peer_id: peer_id_only,
+      amount_sats: parseInt(document.getElementById('fund-amount').value, 10)
+    };
+    contentEl.textContent = 'Funding channel...';
+    send('fund_channel', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') contentEl.innerHTML = `✅ <b>Channel funding initiated!</b> TXID: ${d.data.txid}`;
+      else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      document.getElementById('raw-channels').textContent = JSON.stringify(m, null, 2);
+    });
+  };
+
+  document.getElementById('btn-send-btc').onclick = () => {
+    const data = {
+      recipient_address: document.getElementById('send-btc-addr').value,
+      amount_btc: parseFloat(document.getElementById('send-btc-amount').value),
+      fee_rate_sats_per_vb: parseInt(document.getElementById('send-btc-fee').value, 10)
+    };
+
+    const contentEl = document.getElementById('send-btc-content');
+    if (!data.recipient_address || !data.amount_btc) { contentEl.innerHTML = `❌ <b>Error:</b> Fields missing.`; return; }
+
+    contentEl.textContent = 'Sending...';
+    send('send_btc_onchain', data, (m) => {
+      const d = m.data;
+      if (d.status === 'success') contentEl.innerHTML = `✅ <b>Success!</b> TXID: ${d.data.tx_id}`;
+      else contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
+    });
+  };
+
+  document.getElementById('btn-check-btc-addr').onclick = () => {
+    const addr = document.getElementById('send-btc-addr').value;
+    const resEl = document.getElementById('check-btc-addr-res');
+
+    if (!addr) { resEl.innerHTML = ''; return; }
+
+    resEl.innerHTML = 'Checking...';
+    send('validate_btc_address', { address: addr }, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        const v = d.data;
+        if (v.isvalid) {
+          // Valid address - check if we know this person
+          send('contact_list', {}, (cm) => {
+            let matchName = null;
+            if (cm.data.status === 'success') {
+              const found = cm.data.data.find(c => c.address === addr);
+              if (found) matchName = found.name;
+            }
+
+            if (matchName) {
+              resEl.innerHTML = `<span style="color:green">✅ Valid Address (Matches: <b>${matchName}</b>)</span>`;
+            } else {
+              resEl.innerHTML = `<span style="color:green">✅ Valid Address</span>`;
+            }
+          });
+        } else {
+          resEl.innerHTML = `<span style="color:red">❌ Invalid Address</span>`;
+        }
+      } else {
+        resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
       }
+    });
+  };
 
-      resEl.innerHTML = `
+  document.getElementById('btn-decode-pay').onclick = () => {
+    const inv = document.getElementById('ln-pay-string').value;
+    const userId = document.querySelector('input[name="node-pay-inv"]:checked').value;
+    const resEl = document.getElementById('decode-pay-res');
+
+    if (!inv) { resEl.innerHTML = 'Empty string'; return; }
+
+    resEl.innerHTML = 'Decoding...';
+    send('decode_ln_invoice', { invoice_string: inv, userId }, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        const info = d.data;
+        let payeeDisplay = info.payee || 'Unknown';
+        if (info._alias) {
+          // Format: "02abc... (Node4)"
+          payeeDisplay += ` <b>(${info._alias})</b>`;
+        }
+
+        resEl.innerHTML = `
               <div style="background:#eee; padding:5px; margin-top:5px; border-radius:3px; word-break:break-all;">
                 <div><b>Pay to Node:</b> ${payeeDisplay}</div>
                 <div><b>Description:</b> ${info.description || 'No desc'}</div>
@@ -1976,30 +1976,30 @@ document.getElementById('btn-decode-pay').onclick = () => {
                 <div><b>Expiry:</b> ${info.expiry}s</div>
               </div>
             `;
-    } else {
-      resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
-    }
-  });
-}
+      } else {
+        resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
+      }
+    });
+  }
 
-// Identity Tools Handlers
-const signBtn = document.getElementById('btn-sign-msg');
-if (signBtn) {
-  signBtn.onclick = () => {
-    const msg = document.getElementById('sign-msg-input').value;
-    const userId = getCurrentNodeId();
-    const resEl = document.getElementById('sign-msg-res');
+  // Identity Tools Handlers
+  const signBtn = document.getElementById('btn-sign-msg');
+  if (signBtn) {
+    signBtn.onclick = () => {
+      const msg = document.getElementById('sign-msg-input').value;
+      const userId = getCurrentNodeId();
+      const resEl = document.getElementById('sign-msg-res');
 
-    if (!msg) { alert('Please enter a message'); return; }
+      if (!msg) { alert('Please enter a message'); return; }
 
-    resEl.style.display = 'block';
-    resEl.textContent = 'Signing...';
+      resEl.style.display = 'block';
+      resEl.textContent = 'Signing...';
 
-    send('sign_message', { message: msg, userId }, (m) => {
-      const d = m.data;
-      if (d.status === 'success') {
-        resEl.style.color = '#333';
-        resEl.innerHTML = `
+      send('sign_message', { message: msg, userId }, (m) => {
+        const d = m.data;
+        if (d.status === 'success') {
+          resEl.style.color = '#333';
+          resEl.innerHTML = `
             <div style="margin-bottom:5px; color:green;"><b>✅ Signed Successfully!</b></div>
             
             <div style="font-weight:bold; margin-top:5px;">Signature (Share this):</div>
@@ -2018,200 +2018,200 @@ if (signBtn) {
                </div>
             </div>
           `;
-      } else {
-        resEl.style.color = 'red';
-        resEl.textContent = `Error: ${d.error}`;
-      }
-      // Show raw output in the Hub tab's raw area (or general if applicable)
-      const rawEl = document.getElementById('raw-hub') || document.getElementById('raw-bitcoin');
-      if (rawEl) rawEl.textContent = JSON.stringify(m, null, 2);
-    });
-  };
-}
+        } else {
+          resEl.style.color = 'red';
+          resEl.textContent = `Error: ${d.error}`;
+        }
+        // Show raw output in the Hub tab's raw area (or general if applicable)
+        const rawEl = document.getElementById('raw-hub') || document.getElementById('raw-bitcoin');
+        if (rawEl) rawEl.textContent = JSON.stringify(m, null, 2);
+      });
+    };
+  }
 
-const verifyBtn = document.getElementById('btn-verify-msg');
-if (verifyBtn) {
-  verifyBtn.onclick = () => {
-    const msg = document.getElementById('verify-msg-input').value;
-    const sig = document.getElementById('verify-sig-input').value;
-    const resEl = document.getElementById('verify-msg-res');
+  const verifyBtn = document.getElementById('btn-verify-msg');
+  if (verifyBtn) {
+    verifyBtn.onclick = () => {
+      const msg = document.getElementById('verify-msg-input').value;
+      const sig = document.getElementById('verify-sig-input').value;
+      const resEl = document.getElementById('verify-msg-res');
 
-    if (!msg || !sig) { resEl.innerHTML = '<span style="color:red">Missing fields</span>'; return; }
+      if (!msg || !sig) { resEl.innerHTML = '<span style="color:red">Missing fields</span>'; return; }
 
-    resEl.innerHTML = 'Verifying...';
-    send('verify_message', { message: msg, signature: sig }, (m) => {
-      const d = m.data;
-      if (d.status === 'success') {
-        const v = d.data;
-        if (v.verified) {
-          const signer = v._alias ? `${v._alias} (${v.pubkey.substr(0, 8)}...)` : v.pubkey;
-          resEl.innerHTML = `
+      resEl.innerHTML = 'Verifying...';
+      send('verify_message', { message: msg, signature: sig }, (m) => {
+        const d = m.data;
+        if (d.status === 'success') {
+          const v = d.data;
+          if (v.verified) {
+            const signer = v._alias ? `${v._alias} (${v.pubkey.substr(0, 8)}...)` : v.pubkey;
+            resEl.innerHTML = `
                    <div style="background:#d4edda; color:#155724; padding:10px; border-radius:3px;">
                      <b>✅ Valid Signature!</b><br>
                      Signed by: <b>${signer}</b>
                    </div>
                  `;
-        } else {
-          resEl.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-radius:3px;">
+          } else {
+            resEl.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-radius:3px;">
                   <b>❌ Invalid Signature</b><br>
                   <small>${v.raw_error || ''}</small>
                </div>`;
+          }
+        } else {
+          resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
         }
-      } else {
-        resEl.innerHTML = `<span style="color:red">Error: ${d.error}</span>`;
-      }
 
-      const rawEl = document.getElementById('raw-hub') || document.getElementById('raw-bitcoin');
-      if (rawEl) rawEl.textContent = JSON.stringify(m, null, 2);
+        const rawEl = document.getElementById('raw-hub') || document.getElementById('raw-bitcoin');
+        if (rawEl) rawEl.textContent = JSON.stringify(m, null, 2);
+      });
+    };
+  }
+
+  document.getElementById('btn-reset-world').onclick = () => {
+    const el = document.getElementById('reset-status');
+    el.textContent = 'Running Diagnostic Reset...';
+    send('admin_reset_world', {}, (m) => {
+      const d = m.data.data || {};
+      if (m.data.status === 'success') el.innerHTML = `<span style="color:darkred"><b>${d.message}</b></span>`;
+      else el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
+      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
     });
   };
-}
 
-document.getElementById('btn-reset-world').onclick = () => {
-  const el = document.getElementById('reset-status');
-  el.textContent = 'Running Diagnostic Reset...';
-  send('admin_reset_world', {}, (m) => {
-    const d = m.data.data || {};
-    if (m.data.status === 'success') el.innerHTML = `<span style="color:darkred"><b>${d.message}</b></span>`;
-    else el.innerHTML = `<span style="color:red">${m.data.error}</span>`;
-    document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-  });
-};
+  document.getElementById('btn-refresh-liq').onclick = () => {
+    const userId = getCurrentNodeId();
+    send('get_liquidity_report', { userId }, (m) => {
+      const d = m.data.data;
+      if (m.data.status === 'success') {
+        const total = d.outbound_sats + d.inbound_sats;
+        const outPct = total ? Math.round((d.outbound_sats / total) * 100) : 0;
+        const inPct = total ? Math.round((d.inbound_sats / total) * 100) : 0;
 
-document.getElementById('btn-refresh-liq').onclick = () => {
-  const userId = getCurrentNodeId();
-  send('get_liquidity_report', { userId }, (m) => {
-    const d = m.data.data;
-    if (m.data.status === 'success') {
-      const total = d.outbound_sats + d.inbound_sats;
-      const outPct = total ? Math.round((d.outbound_sats / total) * 100) : 0;
-      const inPct = total ? Math.round((d.inbound_sats / total) * 100) : 0;
+        const barOut = document.getElementById('bar-out');
+        const barIn = document.getElementById('bar-in');
+        barOut.style.width = `${outPct}%`; barOut.textContent = outPct > 10 ? `Out ${outPct}%` : '';
+        barIn.style.width = `${inPct}%`; barIn.textContent = inPct > 10 ? `In ${inPct}%` : '';
 
-      const barOut = document.getElementById('bar-out');
-      const barIn = document.getElementById('bar-in');
-      barOut.style.width = `${outPct}%`; barOut.textContent = outPct > 10 ? `Out ${outPct}%` : '';
-      barIn.style.width = `${inPct}%`; barIn.textContent = inPct > 10 ? `In ${inPct}%` : '';
+        const health = d.health;
+        let badgeClass = health.status === 'HEALTHY' ? 'health-ok' : 'health-bad';
+        if (health.status === 'LOW_INBOUND' || health.status === 'LOW_OUTBOUND') badgeClass = 'health-warn';
 
-      const health = d.health;
-      let badgeClass = health.status === 'HEALTHY' ? 'health-ok' : 'health-bad';
-      if (health.status === 'LOW_INBOUND' || health.status === 'LOW_OUTBOUND') badgeClass = 'health-warn';
-
-      document.getElementById('liq-details').innerHTML = `
+        document.getElementById('liq-details').innerHTML = `
           <div><b>Total:</b> ${d.total_capacity_sats.toLocaleString()} sats</div>
           <div><b>Outbound (Send):</b> ${d.outbound_sats.toLocaleString()}</div>
           <div><b>Inbound (Recv):</b> ${d.inbound_sats.toLocaleString()}</div>
           <div style="margin-top:5px;">Status: <span class="health-tag ${badgeClass}">${health.status}</span></div>
         `;
 
-      const fixArea = document.getElementById('liq-fix-area');
-      if (health.action_required && health.status === 'LOW_INBOUND') {
-        fixArea.style.display = 'block';
-        document.getElementById('liq-msg').textContent = `⚠️ ${health.message}`;
-      } else {
-        fixArea.style.display = 'none';
+        const fixArea = document.getElementById('liq-fix-area');
+        if (health.action_required && health.status === 'LOW_INBOUND') {
+          fixArea.style.display = 'block';
+          document.getElementById('liq-msg').textContent = `⚠️ ${health.message}`;
+        } else {
+          fixArea.style.display = 'none';
+        }
       }
-    }
-    document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-req-inbound').onclick = () => {
-  document.getElementById('inbound-status').textContent = 'Requesting...';
-  send('request_inbound_liquidity', { userId: 'node4', amount_sats: 500000 }, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      document.getElementById('inbound-status').innerHTML = `<span style="color:green">✅ ${d.data.message}</span>`;
-      setTimeout(() => document.getElementById('btn-refresh-liq').click(), 2000);
-    } else {
-      document.getElementById('inbound-status').innerHTML = `<span style="color:red">${d.error}</span>`;
-    }
-    document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-document.getElementById('btn-mine-blocks').onclick = () => {
-  const num_blocks = parseInt(document.getElementById('num-blocks').value, 10) || 1;
-  const contentEl = document.getElementById('mine-blocks-content');
-  contentEl.textContent = `Mining ${num_blocks} block(s)...`;
-  send('btc_mine_blocks_regtest', { num_blocks }, (m) => {
-    const d = m.data;
-    if (d.status === 'success') {
-      contentEl.innerHTML = `✅ <b>Success!</b> Mined ${d.data.blocks_mined} block(s).`;
-      if (d.data.blocks_mined === 1) contentEl.innerHTML += ` Hash: ${d.data.block_hashes[0]}`;
-    } else {
-      contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
-    }
-    document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
-  });
-};
-
-// -------------------------
-// 📇 CONTACTS LOGIC
-// -------------------------
-const btnSave = document.getElementById('btn-save-contact');
-if (btnSave) {
-  btnSave.onclick = () => {
-    const name = document.getElementById('contact-name').value;
-    const address = document.getElementById('contact-address').value;
-    const note = document.getElementById('contact-note').value;
-    const res = document.getElementById('save-contact-res');
-
-    if (!name || !address) {
-      res.innerHTML = '<span style="color:red">Name and Address are required.</span>';
-      return;
-    }
-
-    // Detect type simply by prefix
-    let type = 'Unspecified';
-    if (address.toLowerCase().startsWith('bc') || address.toLowerCase().startsWith('1') || address.toLowerCase().startsWith('3')) type = 'BTC';
-    if (address.toLowerCase().startsWith('ln')) type = 'LN';
-    if (/^[0-9a-fA-F]{66}$/.test(address)) type = 'NodeID';
-
-    res.innerHTML = 'Saving...';
-
-    send('contact_add', { name, address, type, note }, (m) => {
-      if (m.data.status === 'success') {
-        res.innerHTML = '<span style="color:green">✅ Contact Saved!</span>';
-        document.getElementById('contact-name').value = '';
-        document.getElementById('contact-address').value = '';
-        document.getElementById('contact-note').value = '';
-        // Refresh list
-        document.getElementById('btn-refresh-contacts').click();
-      } else {
-        res.innerHTML = `<span style="color:red">❌ Error: ${m.data.error}</span>`;
-      }
+      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
     });
   };
-}
 
-const btnRefresh = document.getElementById('btn-refresh-contacts');
-if (btnRefresh) {
-  btnRefresh.onclick = () => {
-    const list = document.getElementById('contacts-list');
-    list.innerHTML = '<i>Refreshing...</i>';
+  document.getElementById('btn-req-inbound').onclick = () => {
+    document.getElementById('inbound-status').textContent = 'Requesting...';
+    send('request_inbound_liquidity', { userId: 'node4', amount_sats: 500000 }, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        document.getElementById('inbound-status').innerHTML = `<span style="color:green">✅ ${d.data.message}</span>`;
+        setTimeout(() => document.getElementById('btn-refresh-liq').click(), 2000);
+      } else {
+        document.getElementById('inbound-status').innerHTML = `<span style="color:red">${d.error}</span>`;
+      }
+      document.getElementById('raw-hub').textContent = JSON.stringify(m, null, 2);
+    });
+  };
 
-    send('contact_list', {}, (m) => {
-      if (m.data.status === 'success') {
-        const contacts = m.data.data;
-        list.innerHTML = '';
+  document.getElementById('btn-mine-blocks').onclick = () => {
+    const num_blocks = parseInt(document.getElementById('num-blocks').value, 10) || 1;
+    const contentEl = document.getElementById('mine-blocks-content');
+    contentEl.textContent = `Mining ${num_blocks} block(s)...`;
+    send('btc_mine_blocks_regtest', { num_blocks }, (m) => {
+      const d = m.data;
+      if (d.status === 'success') {
+        contentEl.innerHTML = `✅ <b>Success!</b> Mined ${d.data.blocks_mined} block(s).`;
+        if (d.data.blocks_mined === 1) contentEl.innerHTML += ` Hash: ${d.data.block_hashes[0]}`;
+      } else {
+        contentEl.innerHTML = `❌ <b>Error:</b> ${d.error}`;
+      }
+      document.getElementById('raw-bitcoin').textContent = JSON.stringify(m, null, 2);
+    });
+  };
 
-        if (contacts.length === 0) {
-          list.innerHTML = '<i>No contacts saved yet.</i>';
-          return;
+  // -------------------------
+  // 📇 CONTACTS LOGIC
+  // -------------------------
+  const btnSave = document.getElementById('btn-save-contact');
+  if (btnSave) {
+    btnSave.onclick = () => {
+      const name = document.getElementById('contact-name').value;
+      const address = document.getElementById('contact-address').value;
+      const note = document.getElementById('contact-note').value;
+      const res = document.getElementById('save-contact-res');
+
+      if (!name || !address) {
+        res.innerHTML = '<span style="color:red">Name and Address are required.</span>';
+        return;
+      }
+
+      // Detect type simply by prefix
+      let type = 'Unspecified';
+      if (address.toLowerCase().startsWith('bc') || address.toLowerCase().startsWith('1') || address.toLowerCase().startsWith('3')) type = 'BTC';
+      if (address.toLowerCase().startsWith('ln')) type = 'LN';
+      if (/^[0-9a-fA-F]{66}$/.test(address)) type = 'NodeID';
+
+      res.innerHTML = 'Saving...';
+
+      send('contact_add', { name, address, type, note }, (m) => {
+        if (m.data.status === 'success') {
+          res.innerHTML = '<span style="color:green">✅ Contact Saved!</span>';
+          document.getElementById('contact-name').value = '';
+          document.getElementById('contact-address').value = '';
+          document.getElementById('contact-note').value = '';
+          // Refresh list
+          document.getElementById('btn-refresh-contacts').click();
+        } else {
+          res.innerHTML = `<span style="color:red">❌ Error: ${m.data.error}</span>`;
         }
+      });
+    };
+  }
 
-        contacts.forEach(c => {
-          const el = document.createElement('div');
-          el.style.borderBottom = '1px solid #eee';
-          el.style.padding = '8px';
-          el.style.background = '#fff';
-          el.style.marginBottom = '5px';
-          el.style.borderRadius = '4px';
+  const btnRefresh = document.getElementById('btn-refresh-contacts');
+  if (btnRefresh) {
+    btnRefresh.onclick = () => {
+      const list = document.getElementById('contacts-list');
+      list.innerHTML = '<i>Refreshing...</i>';
 
-          const badgeColor = c.type === 'BTC' ? '#fff3cd' : (c.type === 'LN' ? '#d1ecf1' : '#eee');
-          const badgeText = c.type === 'BTC' ? '#856404' : (c.type === 'LN' ? '#0c5460' : '#555');
+      send('contact_list', {}, (m) => {
+        if (m.data.status === 'success') {
+          const contacts = m.data.data;
+          list.innerHTML = '';
 
-          el.innerHTML = `
+          if (contacts.length === 0) {
+            list.innerHTML = '<i>No contacts saved yet.</i>';
+            return;
+          }
+
+          contacts.forEach(c => {
+            const el = document.createElement('div');
+            el.style.borderBottom = '1px solid #eee';
+            el.style.padding = '8px';
+            el.style.background = '#fff';
+            el.style.marginBottom = '5px';
+            el.style.borderRadius = '4px';
+
+            const badgeColor = c.type === 'BTC' ? '#fff3cd' : (c.type === 'LN' ? '#d1ecf1' : '#eee');
+            const badgeText = c.type === 'BTC' ? '#856404' : (c.type === 'LN' ? '#0c5460' : '#555');
+
+            el.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
                             <strong style="font-size:1.1em;">${c.name}</strong>
@@ -2224,259 +2224,258 @@ if (btnRefresh) {
                         <button class="btn-delete-contact" data-id="${c.id}" style="background:#dc3545; color:white; border:none; font-size:0.7em; padding:2px 6px;">Del</button>
                     </div>
                   `;
-          list.appendChild(el);
-        });
+            list.appendChild(el);
+          });
 
-        // Attach delete handlers
-        document.querySelectorAll('.btn-delete-contact').forEach(btn => {
-          btn.onclick = (e) => {
-            const id = e.target.getAttribute('data-id');
-            if (confirm('Delete this contact?')) {
-              send('contact_delete', { id }, (delM) => {
-                if (delM.data.status === 'success') {
-                  document.getElementById('btn-refresh-contacts').click();
-                } else {
-                  alert('Failed to delete: ' + delM.data.error);
-                }
-              });
-            }
-          };
-        });
+          // Attach delete handlers
+          document.querySelectorAll('.btn-delete-contact').forEach(btn => {
+            btn.onclick = (e) => {
+              const id = e.target.getAttribute('data-id');
+              if (confirm('Delete this contact?')) {
+                send('contact_delete', { id }, (delM) => {
+                  if (delM.data.status === 'success') {
+                    document.getElementById('btn-refresh-contacts').click();
+                  } else {
+                    alert('Failed to delete: ' + delM.data.error);
+                  }
+                });
+              }
+            };
+          });
 
-      } else {
-        list.innerHTML = `<span style="color:red">Error loading contacts: ${m.data.error}</span>`;
-      }
-    });
-  };
-}
-// 💬 CHAT PAY / KEYSEND
-const btnKeysend = document.getElementById('btn-keysend');
-if (btnKeysend) {
-  btnKeysend.onclick = () => {
-    const data = {
-      userId: getCurrentNodeId(),
-      destination_pubkey: document.getElementById('keysend-pubkey').value,
-      amount_sats: parseInt(document.getElementById('keysend-amount').value, 10)
+        } else {
+          list.innerHTML = `<span style="color:red">Error loading contacts: ${m.data.error}</span>`;
+        }
+      });
     };
-    const contentEl = document.getElementById('keysend-content');
+  }
+  // 💬 CHAT PAY / KEYSEND
+  const btnKeysend = document.getElementById('btn-keysend');
+  if (btnKeysend) {
+    btnKeysend.onclick = () => {
+      const data = {
+        userId: getCurrentNodeId(),
+        destination_pubkey: document.getElementById('keysend-pubkey').value,
+        amount_sats: parseInt(document.getElementById('keysend-amount').value, 10)
+      };
+      const contentEl = document.getElementById('keysend-content');
 
-    if (!data.destination_pubkey || !data.amount_sats) {
-      contentEl.innerHTML = '❌ <b>Error:</b> Pubkey and Amount required.';
-      return;
-    }
+      if (!data.destination_pubkey || !data.amount_sats) {
+        contentEl.innerHTML = '❌ <b>Error:</b> Pubkey and Amount required.';
+        return;
+      }
 
-    contentEl.textContent = 'Sending keysend...';
+      contentEl.textContent = 'Sending keysend...';
 
-    send('keysend_ln_payment', data, (m) => {
-      const d = m.data;
-      if (d.status === 'success') {
-        contentEl.innerHTML = `
+      send('keysend_ln_payment', data, (m) => {
+        const d = m.data;
+        if (d.status === 'success') {
+          contentEl.innerHTML = `
                <div style="background:#d4edda; color:#155724; padding:10px; border-radius:3px; word-break: break-all;">
                   <b>✅ Sent Instantly!</b><br>
                   Preimage: <span style="font-family:monospace; font-size:0.8em">${d.data.payment_preimage}</span>
                </div>`;
-      } else {
-        contentEl.innerHTML = `<span style="color:red">❌ Error: ${d.error}</span>`;
-      }
-      if (document.getElementById('raw-lightning')) {
-        document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
-      }
-    });
-  };
-}
-
-// Helper to populate Keysend contacts dropdown
-const refreshKeysendContacts = () => {
-  const selectEl = document.getElementById('keysend-contact-select');
-  if (!selectEl) return;
-
-  selectEl.innerHTML = '<option value="">Loading...</option>';
-
-  send('contact_list', {}, (m) => {
-    if (m.data.status === 'success') {
-      const contacts = m.data.data.filter(c => c.type === 'NodeID');
-      selectEl.innerHTML = '<option value="">-- Select Contact --</option>';
-
-      if (contacts.length === 0) {
-        const opt = document.createElement('option');
-        opt.disabled = true;
-        opt.text = '(No NodeID contacts found)';
-        selectEl.appendChild(opt);
-        return;
-      }
-
-      contacts.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.address; // The Node ID
-        opt.text = `${c.name} (${c.address.substring(0, 10)}...)`;
-        selectEl.appendChild(opt);
-      });
-
-      // If we just saved a contact (refresh triggered), maybe auto-select? 
-      // For now, keep it simple.
-    } else {
-      selectEl.innerHTML = '<option>Error loading contacts</option>';
-    }
-  });
-};
-
-// Trigger load
-refreshKeysendContacts();
-// Also hook into the main Contact Refresh button to update this list too
-const btnRefreshContacts = document.getElementById('btn-refresh-contacts');
-if (btnRefreshContacts) {
-  const originalOnClick = btnRefreshContacts.onclick;
-  btnRefreshContacts.onclick = (e) => {
-    if (originalOnClick) originalOnClick(e);
-    refreshKeysendContacts();
-  };
-}
-
-// Handle Selection
-const selectKeysend = document.getElementById('keysend-contact-select');
-if (selectKeysend) {
-  selectKeysend.onchange = (e) => {
-    const val = e.target.value;
-    if (val) {
-      document.getElementById('keysend-pubkey').value = val;
-    }
-  };
-}
-
-// --- WALLET SETUP LISTENERS ---
-const btnCreateWallet = document.getElementById('btn-create-wallet');
-if (btnCreateWallet) {
-  btnCreateWallet.addEventListener('click', () => {
-    if (!confirm('Are you sure? This will WIPE the current Node 4 data and restart it.')) return;
-
-    const out = getActiveRaw();
-    out.textContent = 'Generating wallet and restarting nodes... please wait...';
-
-    send('initialize_node_wallet', { action: 'create' }, (res) => {
-      out.textContent = JSON.stringify(res, null, 2);
-
-      const payload = res.data;
-      if (payload && payload.status === 'success') {
-        const container = document.getElementById('create-wallet-res');
-        const display = document.getElementById('new-mnemonic-display');
-        container.style.display = 'block';
-        display.textContent = payload.data.mnemonic;
-        alert('Wallet Created Successfully! Node ID updated.');
-      } else {
-        alert('Error creating wallet: ' + (payload ? payload.error : 'Unknown error'));
-      }
-    });
-  });
-}
-
-const checkImport = document.getElementById('confirm-import');
-const btnImport = document.getElementById('btn-import-wallet');
-if (checkImport && btnImport) {
-  checkImport.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      btnImport.style.opacity = '1';
-      btnImport.style.pointerEvents = 'auto';
-    } else {
-      btnImport.style.opacity = '0.6';
-      btnImport.style.pointerEvents = 'none';
-    }
-  });
-
-  btnImport.addEventListener('click', () => {
-    const mnemonic = document.getElementById('import-mnemonic').value.trim();
-    if (!mnemonic) { alert('Please enter a mnemonic.'); return; }
-
-    const out = getActiveRaw();
-    out.textContent = 'Recovering wallet and restarting nodes... please wait...';
-    document.getElementById('import-wallet-res').textContent = 'Processing...';
-
-    send('initialize_node_wallet', { action: 'recover', mnemonic: mnemonic }, (res) => {
-      out.textContent = JSON.stringify(res, null, 2);
-
-      const payload = res.data;
-      if (payload && payload.status === 'success') {
-        document.getElementById('import-wallet-res').innerHTML = '<span style="color:green; font-weight:bold;">✅ Recovery Successful! Node ID restored.</span>';
-        alert('Wallet Recovered! Node ID: ' + payload.data.nodeId);
-      } else {
-        document.getElementById('import-wallet-res').innerHTML = `<span style="color:red; font-weight:bold;">❌ Error: ${payload ? payload.error : 'Unknown error'}</span>`;
-      }
-    });
-  });
-}
-
-// --- BACKUP & RECOVERY LISTENERS ---
-const btnExportScb = document.getElementById('btn-export-scb');
-if (btnExportScb) {
-  btnExportScb.addEventListener('click', () => {
-    const out = getActiveRaw();
-    out.textContent = 'Requesting SCB export...';
-
-    send('export_scb', {}, (res) => {
-      out.textContent = JSON.stringify(res, null, 2);
-      if (res.data.status === 'success') {
-        const { hex, filename } = res.data.data;
-
-        // Convert hex to binary blob
-        const buffer = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-        const blob = new Blob([buffer], { type: 'application/octet-stream' });
-
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename || 'emergency.recover';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('Export failed: ' + res.data.error);
-      }
-    });
-  });
-}
-
-const btnRecoverFunds = document.getElementById('btn-recover-funds');
-if (btnRecoverFunds) {
-  btnRecoverFunds.addEventListener('click', () => {
-    const fileInput = document.getElementById('scb-file-upload');
-    const file = fileInput.files[0];
-    if (!file) { alert('Please select a file first.'); return; }
-
-    if (!confirm('Proceed with Fund Recovery? This will restart the node.')) return;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      // ArrayBuffer -> Hex
-      const buffer = new Uint8Array(e.target.result);
-      const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      const out = getActiveRaw();
-      out.textContent = 'Uploading SCB and initiating recovery... please wait...';
-      document.getElementById('recover-scb-res').textContent = 'Processing...';
-
-      send('recover_funds', { hex_data: hex }, (res) => {
-        out.textContent = JSON.stringify(res, null, 2);
-        const d = res.data;
-        if (d.status === 'success') {
-          document.getElementById('recover-scb-res').innerHTML = `<span style="color:green; font-weight:bold;">✅ ${d.data.message}</span><div style="font-size:0.9em">${d.data.note}</div>`;
         } else {
-          document.getElementById('recover-scb-res').innerHTML = `<span style="color:red; font-weight:bold;">❌ Error: ${d.error}</span>`;
+          contentEl.innerHTML = `<span style="color:red">❌ Error: ${d.error}</span>`;
+        }
+        if (document.getElementById('raw-lightning')) {
+          document.getElementById('raw-lightning').textContent = JSON.stringify(m, null, 2);
         }
       });
     };
-    reader.readAsArrayBuffer(file);
-  });
-}
-// Start Main Logic
-connect()
+  }
 
-// Auto-fill network search if coming effectively from a deep link logic (conceptually)
-// Not needed for this task but good practice to keep init clean.
-} // end dev_wallet
+  // Helper to populate Keysend contacts dropdown
+  const refreshKeysendContacts = () => {
+    const selectEl = document.getElementById('keysend-contact-select');
+    if (!selectEl) return;
+
+    selectEl.innerHTML = '<option value="">Loading...</option>';
+
+    send('contact_list', {}, (m) => {
+      if (m.data.status === 'success') {
+        const contacts = m.data.data.filter(c => c.type === 'NodeID');
+        selectEl.innerHTML = '<option value="">-- Select Contact --</option>';
+
+        if (contacts.length === 0) {
+          const opt = document.createElement('option');
+          opt.disabled = true;
+          opt.text = '(No NodeID contacts found)';
+          selectEl.appendChild(opt);
+          return;
+        }
+
+        contacts.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.address; // The Node ID
+          opt.text = `${c.name} (${c.address.substring(0, 10)}...)`;
+          selectEl.appendChild(opt);
+        });
+
+        // If we just saved a contact (refresh triggered), maybe auto-select? 
+        // For now, keep it simple.
+      } else {
+        selectEl.innerHTML = '<option>Error loading contacts</option>';
+      }
+    });
+  };
+
+  // Trigger load
+  refreshKeysendContacts();
+  // Also hook into the main Contact Refresh button to update this list too
+  const btnRefreshContacts = document.getElementById('btn-refresh-contacts');
+  if (btnRefreshContacts) {
+    const originalOnClick = btnRefreshContacts.onclick;
+    btnRefreshContacts.onclick = (e) => {
+      if (originalOnClick) originalOnClick(e);
+      refreshKeysendContacts();
+    };
+  }
+
+  // Handle Selection
+  const selectKeysend = document.getElementById('keysend-contact-select');
+  if (selectKeysend) {
+    selectKeysend.onchange = (e) => {
+      const val = e.target.value;
+      if (val) {
+        document.getElementById('keysend-pubkey').value = val;
+      }
+    };
+  }
+
+  // --- WALLET SETUP LISTENERS ---
+  const btnCreateWallet = document.getElementById('btn-create-wallet');
+  if (btnCreateWallet) {
+    btnCreateWallet.addEventListener('click', () => {
+      if (!confirm('Are you sure? This will WIPE the current Node 4 data and restart it.')) return;
+
+      const out = getActiveRaw();
+      out.textContent = 'Generating wallet and restarting nodes... please wait...';
+
+      send('initialize_node_wallet', { action: 'create' }, (res) => {
+        out.textContent = JSON.stringify(res, null, 2);
+
+        const payload = res.data;
+        if (payload && payload.status === 'success') {
+          const container = document.getElementById('create-wallet-res');
+          const display = document.getElementById('new-mnemonic-display');
+          container.style.display = 'block';
+          display.textContent = payload.data.mnemonic;
+          alert('Wallet Created Successfully! Node ID updated.');
+        } else {
+          alert('Error creating wallet: ' + (payload ? payload.error : 'Unknown error'));
+        }
+      });
+    });
+  }
+
+  const checkImport = document.getElementById('confirm-import');
+  const btnImport = document.getElementById('btn-import-wallet');
+  if (checkImport && btnImport) {
+    checkImport.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        btnImport.style.opacity = '1';
+        btnImport.style.pointerEvents = 'auto';
+      } else {
+        btnImport.style.opacity = '0.6';
+        btnImport.style.pointerEvents = 'none';
+      }
+    });
+
+    btnImport.addEventListener('click', () => {
+      const mnemonic = document.getElementById('import-mnemonic').value.trim();
+      if (!mnemonic) { alert('Please enter a mnemonic.'); return; }
+
+      const out = getActiveRaw();
+      out.textContent = 'Recovering wallet and restarting nodes... please wait...';
+      document.getElementById('import-wallet-res').textContent = 'Processing...';
+
+      send('initialize_node_wallet', { action: 'recover', mnemonic: mnemonic }, (res) => {
+        out.textContent = JSON.stringify(res, null, 2);
+
+        const payload = res.data;
+        if (payload && payload.status === 'success') {
+          document.getElementById('import-wallet-res').innerHTML = '<span style="color:green; font-weight:bold;">✅ Recovery Successful! Node ID restored.</span>';
+          alert('Wallet Recovered! Node ID: ' + payload.data.nodeId);
+        } else {
+          document.getElementById('import-wallet-res').innerHTML = `<span style="color:red; font-weight:bold;">❌ Error: ${payload ? payload.error : 'Unknown error'}</span>`;
+        }
+      });
+    });
+  }
+
+  // --- BACKUP & RECOVERY LISTENERS ---
+  const btnExportScb = document.getElementById('btn-export-scb');
+  if (btnExportScb) {
+    btnExportScb.addEventListener('click', () => {
+      const out = getActiveRaw();
+      out.textContent = 'Requesting SCB export...';
+
+      send('export_scb', {}, (res) => {
+        out.textContent = JSON.stringify(res, null, 2);
+        if (res.data.status === 'success') {
+          const { hex, filename } = res.data.data;
+
+          // Convert hex to binary blob
+          const buffer = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+          const blob = new Blob([buffer], { type: 'application/octet-stream' });
+
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename || 'emergency.recover';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } else {
+          alert('Export failed: ' + res.data.error);
+        }
+      });
+    });
+  }
+
+  const btnRecoverFunds = document.getElementById('btn-recover-funds');
+  if (btnRecoverFunds) {
+    btnRecoverFunds.addEventListener('click', () => {
+      const fileInput = document.getElementById('scb-file-upload');
+      const file = fileInput.files[0];
+      if (!file) { alert('Please select a file first.'); return; }
+
+      if (!confirm('Proceed with Fund Recovery? This will restart the node.')) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        // ArrayBuffer -> Hex
+        const buffer = new Uint8Array(e.target.result);
+        const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const out = getActiveRaw();
+        out.textContent = 'Uploading SCB and initiating recovery... please wait...';
+        document.getElementById('recover-scb-res').textContent = 'Processing...';
+
+        send('recover_funds', { hex_data: hex }, (res) => {
+          out.textContent = JSON.stringify(res, null, 2);
+          const d = res.data;
+          if (d.status === 'success') {
+            document.getElementById('recover-scb-res').innerHTML = `<span style="color:green; font-weight:bold;">✅ ${d.data.message}</span><div style="font-size:0.9em">${d.data.note}</div>`;
+          } else {
+            document.getElementById('recover-scb-res').innerHTML = `<span style="color:red; font-weight:bold;">❌ Error: ${d.error}</span>`;
+          }
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  connect()
+
+}
+
+dev_wallet()
 },{}],2:[function(require,module,exports){
 // Dev wallet - loads the legacy full-featured dashboard
-const dev_wallet = require('flamingo-ui/src/node_modules/dev-wallet')
-dev_wallet()
+require('flamingo-ui/src/node_modules/dev-wallet')
 
 },{"flamingo-ui/src/node_modules/dev-wallet":1}]},{},[2]);

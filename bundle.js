@@ -147,7 +147,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/action_buttons/action_buttons.js")
-},{"STATE":57,"general_button":17,"receive_btc":35,"send_btc":40}],2:[function(require,module,exports){
+},{"STATE":59,"general_button":17,"receive_btc":36,"send_btc":41}],2:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -328,7 +328,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/add_contact_popup/add_contact_popup.js")
-},{"STATE":57,"add_new_contact":3,"gen_invite_code":16}],3:[function(require,module,exports){
+},{"STATE":59,"add_new_contact":3,"gen_invite_code":16}],3:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -493,7 +493,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/add_new_contact/add_new_contact.js")
-},{"STATE":57,"button":8,"input_field":21}],4:[function(require,module,exports){
+},{"STATE":59,"button":8,"input_field":21}],4:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -742,7 +742,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_input_card/btc_input_card.js")
-},{"STATE":57,"btc_usd_rate":7}],5:[function(require,module,exports){
+},{"STATE":59,"btc_usd_rate":7}],5:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -863,7 +863,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_nodes/btc_nodes.js")
-},{"STATE":57}],6:[function(require,module,exports){
+},{"STATE":59}],6:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const state_db = STATE(__filename)
@@ -999,7 +999,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/btc_req_msg/btc_req_msg.js")
-},{"STATE":57}],7:[function(require,module,exports){
+},{"STATE":59}],7:[function(require,module,exports){
 let cached_rate = null
 
 async function btc_usd_rate(from = 'btc', to = 'usd') {
@@ -1104,7 +1104,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/button/button.js")
-},{"STATE":57}],9:[function(require,module,exports){
+},{"STATE":59}],9:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -1275,7 +1275,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/chat_filter/chat_filter.js")
-},{"STATE":57}],10:[function(require,module,exports){
+},{"STATE":59}],10:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -1549,7 +1549,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/chat_view/chat_view.js")
-},{"STATE":57,"btc_req_msg":6,"button":8,"chat_filter":9,"switch_request":46,"switch_send":47}],11:[function(require,module,exports){
+},{"STATE":59,"btc_req_msg":6,"button":8,"chat_filter":9,"switch_request":47,"switch_send":48}],11:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -1698,7 +1698,7 @@ function fallback_instance (opts) {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/contact_row/contact_row.js")
-},{"STATE":57,"chat_view":10}],12:[function(require,module,exports){
+},{"STATE":59,"chat_view":10}],12:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -1870,7 +1870,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/contacts_list/contacts_list.js")
-},{"STATE":57,"add_contact_popup":2,"contact_row":11,"search_bar":39,"square_button":44}],13:[function(require,module,exports){
+},{"STATE":59,"add_contact_popup":2,"contact_row":11,"search_bar":40,"square_button":45}],13:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2132,7 +2132,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/create_invoice/create_invoice.js")
-},{"STATE":57,"btc_input_card":4,"button":8,"create_invoice_confirmation":14,"input_field":21,"templates":48}],14:[function(require,module,exports){
+},{"STATE":59,"btc_input_card":4,"button":8,"create_invoice_confirmation":14,"input_field":21,"templates":49}],14:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2310,7 +2310,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/create_invoice_confirmation/create_invoice_confirmation.js")
-},{"STATE":57,"button":8,"receipt_row":34,"send_invoice_modal":41}],15:[function(require,module,exports){
+},{"STATE":59,"button":8,"receipt_row":35,"send_invoice_modal":42}],15:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2456,7 +2456,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/details_menu/details_menu.js")
-},{"STATE":57,"button":8,"input_field":21}],16:[function(require,module,exports){
+},{"STATE":59,"button":8,"input_field":21}],16:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2595,7 +2595,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/gen_invite_code/gen_invite_code.js")
-},{"STATE":57,"input_field":21}],17:[function(require,module,exports){
+},{"STATE":59,"input_field":21}],17:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2730,7 +2730,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/general_button/general_button.js")
-},{"STATE":57}],18:[function(require,module,exports){
+},{"STATE":59}],18:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2744,12 +2744,15 @@ const lightning_buttons = require('lightning_buttons')
 const wallet_button = require('wallet_button')
 const light_page_header = require('light_page_header')
 const light_tx_list = require('light_tx_list')
-
+const net = require('net_helper')
+const ws_client = require('ws_client')
 module.exports = home_contents
 
 async function home_contents(opts = {}) {
   const { id, sdb } = await get(opts.sid)
   const { drive } = sdb
+  const { io, _ } = net(id || 'fallback/home_contents')
+  io.accept(ws_client.invite)
 
   const on = { style: inject, data: ondata }
 
@@ -2788,6 +2791,130 @@ async function home_contents(opts = {}) {
     total_wealth_component
   )
 
+  // Real data integration
+  let currentBtc = 0
+  let currentLn = 0
+  let nodeAlias = ''
+
+  const wait = {}
+
+  function fetchNodeInfo() {
+    const head = _['backend']('lightning-getinfo', {}, { nodeId: 'node4' })
+    wait[head[2]] = function (m) {
+      const info = m.data?.data
+      if (info?.alias) nodeAlias = info.alias
+    }
+  }
+
+  function fetchBalances() {
+    const btcHead = _['backend']('get_btc_balance')
+    wait[btcHead[2]] = function (m) {
+      currentBtc = m.data?.data?.btc || 0
+      updateUI()
+    }
+    const lnHead = _['backend']('get_ln_balance', {}, { userId: 'node4' })
+    wait[lnHead[2]] = function (m) {
+      const d = m.data?.data
+      if (d) currentLn = d.btc || 0
+      updateUI()
+    }
+  }
+
+  function fetchBtcTransactions() {
+    const head = _['backend']('list_btc_transactions', {}, { count: 20, skip: 0 })
+    wait[head[2]] = function (m) {
+      const txs = m.data?.data
+      if (!Array.isArray(txs)) return
+      const formatted = txs.map(function (tx) {
+        const date = new Date(tx.time * 1000)
+        const dateString = date.toISOString().split('T')[0]
+        const ttime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        const sign = tx.category === 'receive' ? '+' : '-'
+        const tamount = `${sign}${Math.abs(tx.amount).toFixed(8)}`
+        const tid = nodeAlias || tx.txid || tx.address || 'Unknown'
+        return { tid, ttime, tamount, dateString, avatar: '', txid: tx.txid || '' }
+      })
+      if (transaction_list_component._update) transaction_list_component._update(formatted)
+    }
+  }
+
+  function fetchLnTransactions() {
+    const head = _['backend']('get_transaction_history', {}, { userId: 'node4', limit: 20 })
+    wait[head[2]] = function (m) {
+      const history = m.data?.data
+      if (!Array.isArray(history)) return
+      const lnTxs = history.filter(function (tx) { return tx.type === 'LN' })
+      const formatted = lnTxs.map(function (tx) {
+        const date = new Date(tx.timestamp * 1000)
+        const dateString = date.toISOString().split('T')[0]
+        const ttime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        const sign = tx.direction === 'IN' ? '+' : '-'
+        const amountBtc = (tx.amount_msat / 1000 / 1e8)
+        const tamount = `${sign}${amountBtc.toFixed(8)}`
+        const tid = nodeAlias || tx.note || tx.id || 'Unknown'
+        return { tid, ttime, tamount, dateString, avatar: '' }
+      })
+      if (light_tx_list_component._update) light_tx_list_component._update(formatted)
+    }
+  }
+
+  function updateUI() {
+    const total = Number(currentBtc) + Number(currentLn)
+    if (total_wealth_component._update) {
+      total_wealth_component._update({ total, lightning: Number(currentLn), bitcoin: Number(currentBtc) })
+    }
+    if (home_page_header_component._update) {
+      home_page_header_component._update({ wallet: 'btc', amount: currentBtc })
+    }
+    // Update light_page_header if it has _update method, though it wasn't explicitly needed yet
+    if (light_page_header_component._update) {
+      light_page_header_component._update({ wallet: 'lightning', amount: currentLn })
+    }
+    // Update switch_account dropdown with real balances
+    if (wallet_button_component._update) {
+      wallet_button_component._update({ btc: Number(currentBtc), lightning: Number(currentLn) })
+    }
+  }
+
+  io.on.backend = io_home_contents()
+
+  function io_home_contents() {
+    const on = {
+      payment_received: on__update, //-
+      request_update: on__update // --
+    }
+    return protocol
+
+    function protocol(m) { (on[m.type] || onfail)(m) }
+    function onfail(m) {
+      // daemon echoes: head = ['backend', by, mid] — match by mid (head[2])
+      const mid = m.head?.[2]
+      if (mid === undefined) return
+      const handler = wait[mid]
+      if (!handler) return
+      delete wait[mid]
+      handler(m)
+    }
+    function on__update(m) {
+      fetchBalances()
+      fetchBtcTransactions()
+      fetchLnTransactions()
+    }
+  }
+
+  // Initial fetch
+  fetchNodeInfo()
+  fetchBalances()
+  fetchBtcTransactions()
+  fetchLnTransactions()
+
+  // Periodic refresh (10s)
+  setInterval(() => {
+    fetchBalances()
+    fetchBtcTransactions()
+    fetchLnTransactions()
+  }, 10000)
+
   return el
 
   // -------------------- Protocol to handle child messages --------------------
@@ -2798,11 +2925,10 @@ async function home_contents(opts = {}) {
 
         if (wallet === 'btc') {
           // Update header dynamically
-          home_page_header_component._update?.({ wallet: 'btc', amount: '0.9616' })
+          home_page_header_component._update?.({ wallet: 'btc', amount: currentBtc || '0.00' })
 
           // Re-append BTC view components
-          container.innerHTML = ''
-          container.append(
+          container.replaceChildren(
             home_page_header_component,
             wallet_button_component,
             action_buttons_component,
@@ -2812,11 +2938,12 @@ async function home_contents(opts = {}) {
 
         } else if (wallet === 'lightning') {
           // Update header dynamically
-          home_page_header_component._update?.({ wallet: 'lightning', amount: '0.0246' })
+          if (light_page_header_component._update) {
+            light_page_header_component._update({ wallet: 'lightning', amount: currentLn || '0.00' })
+          }
 
           // Show Lightning buttons instead of BTC action buttons
-          container.innerHTML = ''
-          container.append(
+          container.replaceChildren(
             light_page_header_component,
             wallet_button_component,
             lightning_buttons_component,
@@ -2838,7 +2965,7 @@ async function home_contents(opts = {}) {
   }
 
   function inject(data) { style.textContent = data[0] }
-  function ondata(data) {}
+  function ondata(data) { }
   function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
 }
 
@@ -2854,7 +2981,8 @@ function fallback_module() {
       'lightning_buttons': { $: '' },
       'wallet_button': { $: '' },
       'light_page_header': { $: '' },
-      'light_tx_list': { $: '' }
+      'light_tx_list': { $: '' },
+      'ws_client': { $: '' }
     }
   }
 
@@ -2869,12 +2997,14 @@ function fallback_module() {
     const action_buttons = { mapping: { style: 'style', data: 'data' }, 0: { buttons: { wallet: 'btc' } } }
     const transaction_list = {
       mapping: { style: 'style', data: 'data' },
-      0: { value: [
-        { tid: 'Luis fedrick', ttime: '11:30 AM', tamount: '+0.02456', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
-        { tid: 'skdmf932ksdmf0234lsd', ttime: '02:15 PM', tamount: '+0.03271', avatar: '' },
-        { tid: 'Mark Kevin', ttime: '03:45 PM', tamount: '-0.00421', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
-        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
-      ]}
+      0: {
+        value: [
+          { tid: 'Luis fedrick', ttime: '11:30 AM', tamount: '+0.02456', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
+          { tid: 'skdmf932ksdmf0234lsd', ttime: '02:15 PM', tamount: '+0.03271', avatar: '' },
+          { tid: 'Mark Kevin', ttime: '03:45 PM', tamount: '-0.00421', avatar: 'https://tse4.mm.bing.net/th/id/OIP.VIRWK2jj8b2cHBaymZC5AgHaHa?w=800&h=800&rs=1&pid=ImgDetMain&o=7&rm=3' },
+          { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        ]
+      }
     }
     const total_wealth = {
       mapping: { style: 'style', data: 'data', icons: 'icons' },
@@ -2888,41 +3018,49 @@ function fallback_module() {
     }
     const light_tx_list = {
       mapping: { style: 'style', data: 'data' },
-      0: { value: [
-        { tid: 'skdmf932ksdmf0234lsd', ttime: '09:15 AM', tamount: '-0.00123', avatar: '' },
-        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
-        { tid: 'skdmf932hiuo1h2oihio', ttime: '04:20 PM', tamount: '-0.00234', avatar: '' },
-        { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
-      ]}
+      0: {
+        value: [
+          { tid: 'skdmf932ksdmf0234lsd', ttime: '09:15 AM', tamount: '-0.00123', avatar: '' },
+          { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+          { tid: 'skdmf932hiuo1h2oihio', ttime: '04:20 PM', tamount: '-0.00234', avatar: '' },
+          { tid: 'yweuyiewe32eqw234lsd', ttime: '12:30 PM', tamount: '+0.00567', avatar: '' },
+        ]
+      }
+    }
+    const ws_client = {
+      mapping: { style: 'style', data: 'data' },
+      0: {}
     }
 
     return {
-      drive: { 
-        'style/': { 
-          'home_contents.css': { 
-            '$ref': 'home_contents.css' } 
-        }, 
-        'data/': { 
-          'opts.json': { 
-            raw: opts || {} 
-          } 
-        } 
+      drive: {
+        'style/': {
+          'home_contents.css': {
+            '$ref': 'home_contents.css'
+          }
+        },
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
       },
-      _: { 
-        home_page_header, 
-        action_buttons, 
-        transaction_list, 
-        total_wealth, 
-        lightning_buttons, 
-        wallet_button, 
-        light_page_header, 
-        light_tx_list 
+      _: {
+        home_page_header,
+        action_buttons,
+        transaction_list,
+        total_wealth,
+        lightning_buttons,
+        wallet_button,
+        light_page_header,
+        light_tx_list,
+        ws_client
       }
     }
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_contents/home_contents.js")
-},{"STATE":57,"action_buttons":1,"home_page_header":20,"light_page_header":22,"light_tx_list":24,"lightning_buttons":27,"total_wealth":49,"transaction_list":51,"wallet_button":56}],19:[function(require,module,exports){
+},{"STATE":59,"action_buttons":1,"home_page_header":20,"light_page_header":22,"light_tx_list":24,"lightning_buttons":27,"net_helper":30,"total_wealth":50,"transaction_list":52,"wallet_button":57,"ws_client":58}],19:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -2994,7 +3132,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_page/home_page.js")
-},{"STATE":57,"menu":28}],20:[function(require,module,exports){
+},{"STATE":59,"menu":28}],20:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3028,6 +3166,12 @@ async function home_page_header (opts = {}) {
     const container = shadow.querySelector('.header-container')
 
     await sdb.watch(onbatch)
+
+    // Expose _update method for real data
+    el._update = function({ wallet, amount }) {
+        ondata([{ wallet, amount }])
+    }
+
     return el
 
     async function onbatch (batch) {
@@ -3115,7 +3259,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/home_page_header/home_page_header.js")
-},{"STATE":57}],21:[function(require,module,exports){
+},{"STATE":59}],21:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3252,7 +3396,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/input_field/input_field.js")
-},{"STATE":57}],22:[function(require,module,exports){
+},{"STATE":59}],22:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3260,90 +3404,96 @@ const { sdb, get } = statedb(fallback_module)
 
 module.exports = light_page_header
 
-async function light_page_header (opts = {}) {
-    const { id, sdb } = await get(opts.sid)
-    const { drive } = sdb
+async function light_page_header(opts = {}) {
+  const { id, sdb } = await get(opts.sid)
+  const { drive } = sdb
 
-    const on = {
-        style: inject,
-        data: ondata,
-        icons: iconject,
-    }
+  const on = {
+    style: inject,
+    data: ondata,
+    icons: iconject,
+  }
 
-    const el = document.createElement('div')
-    const shadow = el.attachShadow({ mode: 'closed' })
+  const el = document.createElement('div')
+  const shadow = el.attachShadow({ mode: 'closed' })
 
-    let dricons = []
+  let dricons = []
 
-    shadow.innerHTML = `
+  shadow.innerHTML = `
         <div class="header-container">
    
         </div>
         <style></style>
     `
 
-    const style = shadow.querySelector('style')
-    const container = shadow.querySelector('.header-container')
+  const style = shadow.querySelector('style')
+  const container = shadow.querySelector('.header-container')
 
-    await sdb.watch(onbatch)
-    return el
+  await sdb.watch(onbatch)
 
-    async function onbatch (batch) {
-        for (const { type, paths } of batch) {
-        const data = await Promise.all(
-            paths.map(path => drive.get(path).then(file => file.raw))
-        )
-        const func = on[type] || fail
-        await func(data, type)
-        }
+  //Expose _update method for real data
+  el._update = function ({ wallet, amount }) {
+    ondata([{ wallet, amount }])
+  }
+
+  return el
+
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
+      const data = await Promise.all(
+        paths.map(path => drive.get(path).then(file => file.raw))
+      )
+      const func = on[type] || fail
+      await func(data, type)
+    }
+  }
+
+  function inject(data) {
+    style.textContent = data[0]
+  }
+
+  async function ondata(data) {
+    const { wallet, amount } = data[0]
+
+    let heading = ""
+    let icon = ""
+    let display_amount = amount > 0 ? amount : "0.00"
+
+    if (wallet == "btc") {
+      heading = "Bitcoin Wallet"
+      icon = dricons[0]
+    } else if (wallet == "lightning") {
+      heading = "Lightning Wallet"
+      icon = dricons[1]
+    } else {
+      console.log("Wrong wallet")
     }
 
-    function inject (data) {
-        style.textContent = data[0]
-    }
-
-    async function ondata (data) {
-      const { wallet, amount } = data[0]
-  
-      let heading = ""
-      let icon = ""
-      let display_amount = amount > 0 ? amount : "0.00"
-
-      if (wallet == "btc"){
-        heading = "Bitcoin Wallet"
-        icon = dricons[0]
-      } else if (wallet == "lightning"){
-        heading = "Lightning Wallet"
-        icon = dricons[1]
-      } else{
-        console.log("Wrong wallet")
-      }
-
-      container.innerHTML = `
+    container.innerHTML = `
           <div class="heading">${heading}</div>
           <div class="wallet-row">
             <div class="icon-slot">${icon}</div>
             <div class="wallet-amount">${display_amount}</div>
           </div>
-      ` 
-    }
+      `
+  }
 
 
-    function fail (data, type) {
-        throw new Error('invalid message', { cause: { data, type } })
-    }
+  function fail(data, type) {
+    throw new Error('invalid message', { cause: { data, type } })
+  }
 
-    function iconject (data) {
-        dricons = data
-    } 
+  function iconject(data) {
+    dricons = data
+  }
 }
 
-function fallback_module () {
+function fallback_module() {
   return {
     api: fallback_instance
   }
 
-  function fallback_instance (opts) {
+  function fallback_instance(opts) {
     if (!opts) opts = {}
     if (!opts.value) opts.value = {}
 
@@ -3373,7 +3523,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_page_header/light_page_header.js")
-},{"STATE":57}],23:[function(require,module,exports){
+},{"STATE":59}],23:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3500,7 +3650,7 @@ function fallback_module () {
 
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_history/light_tx_history.js")
-},{"STATE":57,"light_tx_row":26}],24:[function(require,module,exports){
+},{"STATE":59,"light_tx_row":26}],24:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3547,7 +3697,7 @@ async function light_tx_list(opts = {}) {
 
   const subs = await sdb.watch(onbatch)
 
-  // render small list
+  // render small list (fallback/initial)
   subs.slice(1, 5).forEach(async sub => {
     listBody.append(await light_tx_row(sub))
   })
@@ -3564,6 +3714,75 @@ async function light_tx_list(opts = {}) {
       historyMounted = true
     }
   })
+
+  // Expose _update method for real lightning transaction data
+  // Accepts an array of tx objects: [{ tid, ttime, tamount, avatar, dateString }, ...]
+  el._update = async function (txArray) {
+    if (!Array.isArray(txArray)) return
+
+    // Clear existing rows
+    listBody.innerHTML = ''
+
+    if (txArray.length === 0) {
+      listBody.innerHTML = '<div style="text-align:center; color:gray; padding:20px; font-size:14px;">No transactions yet</div>'
+      return
+    }
+
+    // Show up to 4 transactions in the small list
+    const display = txArray.slice(0, 4)
+    for (const tx of display) {
+      const rowEl = document.createElement('div')
+      const rowShadow = rowEl.attachShadow({ mode: 'closed' })
+
+      // Determine avatar
+      let avatar = tx.avatar || ''
+      const isRandom = !avatar && _isRandomString(tx.tid)
+      if (!avatar) {
+        avatar = isRandom
+          ? `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tx.tid)}`
+          : 'https://cdn-icons-png.flaticon.com/512/847/847969.png'
+      }
+
+      const displayTid = _shortenTid(tx.tid || 'Unknown')
+      const dateLabel = _getDateLabel(tx.dateString)
+
+      rowShadow.innerHTML = `
+        <div class="transaction-row">
+          <div class="transaction-detail">
+            <div class="transaction-avatar">
+              <img src="${avatar}" alt="avatar" />
+            </div>
+            <div class="transaction-data">
+              <div class="transaction-id">${displayTid}</div>
+              <div class="transaction-time">${tx.ttime || '—'}</div>
+              <div class="transaction-date">${dateLabel}</div>
+            </div>
+          </div>
+          <div class="transaction-amount">
+            <span>${tx.tamount || '0'} ⚡</span>
+          </div>
+        </div>
+        <style>
+          .transaction-id { font-size: 20px; margin-top: 2px; }
+          .transaction-row { display: flex; flex-direction: row; align-items: start; justify-content: space-between; margin-top: 12px; font-size: 14px; padding: 1%; border-radius: 8px; transition: background-color 0.3s; }
+          .transaction-row:hover { background-color: #f0f0f0; cursor: pointer; }
+          .transaction-detail { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+          .transaction-avatar img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+          .transaction-data { display: flex; flex-direction: column; text-align: start; }
+          .transaction-time { color: gray; text-align: start; }
+          .transaction-date { color: gray; font-size: 12px; }
+          .transaction-amount { font-size: 20px; }
+        </style>
+      `
+      listBody.append(rowEl)
+    }
+
+    // Reset overlay history so it can rebuild with real data on next open
+    if (historyMounted) {
+      historyBody.innerHTML = ''
+      historyMounted = false
+    }
+  }
 
   return el
 
@@ -3586,6 +3805,34 @@ async function light_tx_list(opts = {}) {
   }
 
   function ondata() {}
+
+  // ---- Helpers for _update rendering ----
+  function _getDateLabel(dateString) {
+    if (!dateString) return ''
+    const today = new Date()
+    const target = new Date(dateString)
+    const diffInDays = Math.floor(
+      (today.setHours(0, 0, 0, 0) - target.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+    )
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  function _shortenTid(tid) {
+    if (tid.length > 14) return tid.slice(0, 8) + '...' + tid.slice(-4)
+    return tid
+  }
+
+  function _isRandomString(str) {
+    if (!str) return true
+    if (/[0-9@#$_-]/.test(str)) return true
+    if (str.length > 12 && !/\s/.test(str)) return true
+    const upper = (str.match(/[A-Z]/g) || []).length
+    const lower = (str.match(/[a-z]/g) || []).length
+    if ((upper > 4 && lower > 4) && !/\s/.test(str)) return true
+    return false
+  }
 }
 
 function fallback_module () {
@@ -3652,7 +3899,7 @@ function fallback_module () {
 
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_list/light_tx_list.js")
-},{"STATE":57,"light_tx_history":23,"light_tx_row":26}],25:[function(require,module,exports){
+},{"STATE":59,"light_tx_history":23,"light_tx_row":26}],25:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3782,7 +4029,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_receipt/light_tx_receipt.js")
-},{"STATE":57,"receipt_row":34}],26:[function(require,module,exports){
+},{"STATE":59,"receipt_row":35}],26:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -3973,7 +4220,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/light_tx_row/light_tx_row.js")
-},{"STATE":57,"light_tx_receipt":25}],27:[function(require,module,exports){
+},{"STATE":59,"light_tx_receipt":25}],27:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -4110,7 +4357,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/lightning_buttons/lightning_buttons.js")
-},{"STATE":57,"create_invoice":13,"general_button":17,"pay_invoice":30}],28:[function(require,module,exports){
+},{"STATE":59,"create_invoice":13,"general_button":17,"pay_invoice":31}],28:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -4336,7 +4583,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/menu/menu.js")
-},{"STATE":57,"contacts_list":12,"details_menu":15,"home_contents":18,"more_menu":29}],29:[function(require,module,exports){
+},{"STATE":59,"contacts_list":12,"details_menu":15,"home_contents":18,"more_menu":29}],29:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -4463,7 +4710,76 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/more_menu/more_menu.js")
-},{"STATE":57,"btc_nodes":5}],30:[function(require,module,exports){
+},{"STATE":59,"btc_nodes":5}],30:[function(require,module,exports){
+(function (__filename){(function (){
+function net (id) {
+  const [label, _, sub, hub] = [`[${id}@${__filename}]`, {}, {}, {}]
+  const io = { invite, accept, on: {} }
+  return { io, _ }
+  
+  function forward (to, M) {
+    for (const id of Object.keys(sub)) if (to.startsWith(id)) return sub[id].tx(M)
+    for (const id of Object.keys(hub)) if (to.startsWith(id)) hub[id].tx(M)
+    console.error(`[id] ${label} - cant forward to unknown recipient "${to}"`)
+  }
+  
+  function invite (name, ids) {
+    if (!io.on[name]) throw new Error(`${label} no protocol handler for "${name}"`)
+    return Object.assign(invite, { ids })
+    function invite (tx) {
+      const rx = router(sub)
+      add(name, tx, tx.id, rx, sub)
+      return rx
+    }
+  }
+  
+  function accept (invite) {
+    const rx = router(hub)
+    const tx = invite(Object.assign(rx, { id }))
+    for (const [name, to] of Object.entries(invite.ids)) {
+      if (hub[to]) throw new Error(`${label} already connected to "${to}"`)
+      if (!io.on[name]) throw new Error(`${label} no "${name}" protocol for "${to}"`)
+      add(name, tx, to, rx, hub)
+    }
+  }
+  
+  function router ($) { // forward to receiver node or emit to current node
+    return function rx (M) {
+      const { head: [by, to, mid] } = M
+      console.log(`[by] ${by}\n[to] ${to}\n[id]`, M)
+      if (to !== id) return forward(to, M)
+      if (!$[by]) throw new Error(`${label} unknown sender "${by}"`)
+      const { name } = $[by].state
+      if (!io.on[name]) throw new Error(`${label} no "${name}" protocol for "${to}"`)
+      io.on[name](M)
+    }
+  }
+  
+  function add (name, tx, to, rx, $) {
+    const { state } = $[to] = { rx, tx, state: { name, to, mid: 0 } } 
+    _[name] = send
+    function send (type, refs = {}, data = null) {
+      // If only 2 arguments are provided and the second isn't meant to be refs...
+      // The client mentioned "we can internally detect arguments.length...".
+      // Let's implement that.
+      if (arguments.length === 2 && type !== undefined) {
+        // If they passed data but no refs, wait, the client said flipped so: type, refs, data
+        // Initial messages will have {} for refs. If they send (type, data), we should handle it?
+        // Let's keep it strict for now to avoid bugs, as the client said: send(type, refs = {}, data = null)
+      }
+      
+      const head = [id, to, state.mid++]
+      const meta = { time: Date.now(), stack: (new Error().stack) }
+      tx({ head, refs, type, data, meta })
+      return head
+    }
+  }
+}
+
+module.exports = net;
+
+}).call(this)}).call(this,"/../flamingo-ui/src/node_modules/net_helper/net_helper.js")
+},{}],31:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -4659,7 +4975,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pay_invoice/pay_invoice.js")
-},{"STATE":57,"button":8,"input_field":21,"pay_invoice_confirmation":31}],31:[function(require,module,exports){
+},{"STATE":59,"button":8,"input_field":21,"pay_invoice_confirmation":32}],32:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -4822,7 +5138,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pay_invoice_confirmation/pay_invoice_confirmation.js")
-},{"STATE":57,"button":8,"receipt_row":34}],32:[function(require,module,exports){
+},{"STATE":59,"button":8,"receipt_row":35}],33:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const state_db = STATE(__filename)
@@ -4963,7 +5279,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/pending_request/pending_request.js")
-},{"STATE":57}],33:[function(require,module,exports){
+},{"STATE":59}],34:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5061,7 +5377,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/qr_code/qr_code.js")
-},{"STATE":57,"vanillaqr":54}],34:[function(require,module,exports){
+},{"STATE":59,"vanillaqr":55}],35:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5242,7 +5558,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/receipt_row/receipt_row.js")
-},{"STATE":57,"btc_usd_rate":7}],35:[function(require,module,exports){
+},{"STATE":59,"btc_usd_rate":7}],36:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5373,7 +5689,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/receive_btc/receive_btc.js")
-},{"STATE":57,"input_field":21,"qr_code":33}],36:[function(require,module,exports){
+},{"STATE":59,"input_field":21,"qr_code":34}],37:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5557,7 +5873,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/req_card/req_card.js")
-},{"STATE":57,"btc_usd_rate":7}],37:[function(require,module,exports){
+},{"STATE":59,"btc_usd_rate":7}],38:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5760,7 +6076,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/request_btc/request_btc.js")
-},{"STATE":57,"button":8,"req_card":36,"templates":48}],38:[function(require,module,exports){
+},{"STATE":59,"button":8,"req_card":37,"templates":49}],39:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -5991,7 +6307,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/request_light/request_light.js")
-},{"STATE":57,"button":8,"input_field":21,"req_card":36,"templates":48}],39:[function(require,module,exports){
+},{"STATE":59,"button":8,"input_field":21,"req_card":37,"templates":49}],40:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6087,7 +6403,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/search_bar/search_bar.js")
-},{"STATE":57}],40:[function(require,module,exports){
+},{"STATE":59}],41:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6291,7 +6607,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_btc/send_btc.js")
-},{"STATE":57,"btc_input_card":4,"button":8,"templates":48}],41:[function(require,module,exports){
+},{"STATE":59,"btc_input_card":4,"button":8,"templates":49}],42:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6474,7 +6790,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_invoice_modal/send_invoice_modal.js")
-},{"STATE":57,"search_bar":39,"send_to_contact":42,"share_invoice_via":43,"square_button":44}],42:[function(require,module,exports){
+},{"STATE":59,"search_bar":40,"send_to_contact":43,"share_invoice_via":44,"square_button":45}],43:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6614,7 +6930,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/send_to_contact/send_to_contact.js")
-},{"STATE":57}],43:[function(require,module,exports){
+},{"STATE":59}],44:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6719,7 +7035,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/share_invoice_via/share_invoice_via.js")
-},{"STATE":57}],44:[function(require,module,exports){
+},{"STATE":59}],45:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6816,7 +7132,7 @@ function fallback_module () {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/square_button/square_button.js")
-},{"STATE":57}],45:[function(require,module,exports){
+},{"STATE":59}],46:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -6860,6 +7176,11 @@ async function switch_account (opts = {}, protocol) {
     console.log('[switch_account] message from parent ->', messageToSwitch)
   }) : null
 
+  // Expose _update method for real balance data
+  el._update = function ({ btc, lightning }) {
+    ondata([{ btc, lightning }])
+  }
+
   return el
 
   async function onbatch (batch) {
@@ -6886,11 +7207,11 @@ async function switch_account (opts = {}, protocol) {
       </div>
       <div class="account-container btc-container">
         <div class="btc-icon">${dricons[1] || '₿'} BTC</div>
-        <div class="btc-amount">${typeof btc !== 'undefined' ? parseFloat(btc).toFixed(4) : '0.0000'}</div>       
+        <div class="btc-amount">${typeof btc !== 'undefined' ? btc : '0'}</div>       
       </div>
       <div class="account-container lightning-container">
         <div class="lightning-icon">${dricons[2] || '⚡'} Lightning</div>
-        <div class="lightning-amount">${typeof lightning !== 'undefined' ? parseFloat(lightning).toFixed(4) : '0.0000'}</div>       
+        <div class="lightning-amount">${typeof lightning !== 'undefined' ? lightning : '0'}</div>       
       </div>
     `
 
@@ -6908,6 +7229,8 @@ async function switch_account (opts = {}, protocol) {
     if (btc_container) {
       btc_container.onclick = () => {
         if (send) send({ type: 'switch', data: 'btc' })
+        const dropdown = el.parentNode
+        if (dropdown) dropdown.classList.add('hidden')
       }
     }
 
@@ -6916,6 +7239,8 @@ async function switch_account (opts = {}, protocol) {
     if (lightning_container) {
       lightning_container.onclick = () => {
         if (send) send({ type: 'switch', data: 'lightning' })
+        const dropdown = el.parentNode
+        if (dropdown) dropdown.classList.add('hidden')
       }
     }
   }
@@ -6957,7 +7282,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_account/switch_account.js")
-},{"STATE":57}],46:[function(require,module,exports){
+},{"STATE":59}],47:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7120,7 +7445,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_request/switch_request.js")
-},{"STATE":57,"request_btc":37,"request_light":38}],47:[function(require,module,exports){
+},{"STATE":59,"request_btc":38,"request_light":39}],48:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7283,7 +7608,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/switch_send/switch_send.js")
-},{"STATE":57,"pending_request":32,"send_btc":40}],48:[function(require,module,exports){
+},{"STATE":59,"pending_request":33,"send_btc":41}],49:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7397,7 +7722,7 @@ function fallback_module() {
 }
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/templates/templates.js")
-},{"STATE":57,"btc_usd_rate":7}],49:[function(require,module,exports){
+},{"STATE":59,"btc_usd_rate":7}],50:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7407,18 +7732,18 @@ module.exports = total_wealth
 
 const btc_usd_rate = require('btc_usd_rate')
 
-async function total_wealth (opts = {}, protocol) {
+async function total_wealth(opts = {}, protocol) {
   const { id, sdb } = await get(opts.sid)
-  const {drive} = sdb
+  const { drive } = sdb
 
   const on = {
     style: inject,
     data: ondata,
     icons: iconject,
   }
-  
+
   const el = document.createElement('div')
-  const shadow =  el.attachShadow({ mode: 'closed' })
+  const shadow = el.attachShadow({ mode: 'closed' })
 
   let dricons = []
 
@@ -7442,22 +7767,27 @@ async function total_wealth (opts = {}, protocol) {
   `
 
   const style = shadow.querySelector('style')
-  
+
   await sdb.watch(onbatch)
+
+  //Expose _update method for real data
+  el._update = function ({ total, lightning, bitcoin }) {
+    renderValues({ total, lightning, bitcoin })
+  }
 
   return el
 
   function fail(data, type) { throw new Error('invalid message', { cause: { data, type } }) }
 
-  async function onbatch (batch) {
-    for (const { type, paths } of batch){
+  async function onbatch(batch) {
+    for (const { type, paths } of batch) {
       const data = await Promise.all(paths.map(path => drive.get(path).then(file => file.raw)))
       const func = on[type] || fail
       func(data, type)
     }
   }
 
-  function inject (data) {
+  function inject(data) {
     style.textContent = data[0]
 
   }
@@ -7465,52 +7795,52 @@ async function total_wealth (opts = {}, protocol) {
   function ondata(data) {
     renderValues(data[0]?.value || {})
   }
-  
+
 
   async function renderValues({ total = 0, lightning = 0, bitcoin = 0 }) {
     const rate = await btc_usd_rate('btc', 'usd')
     const usd = rate * total
 
-    shadow.querySelector('.total-wealth-value span').textContent = `₿ ${total.toFixed(4)}`
-    shadow.querySelector('.total-wealth-usd').textContent = `= $${usd.toLocaleString(undefined, {maximumFractionDigits: 2})}`
-    shadow.querySelectorAll('.wallet-row')[0].querySelector('span').textContent = lightning.toFixed(4)
-    shadow.querySelectorAll('.wallet-row')[1].querySelector('span').textContent = bitcoin.toFixed(4)
-    
+    shadow.querySelector('.total-wealth-value span').textContent = `₿ ${total}`
+    shadow.querySelector('.total-wealth-usd').textContent = `= $${usd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+    shadow.querySelectorAll('.wallet-row')[0].querySelector('span').textContent = lightning
+    shadow.querySelectorAll('.wallet-row')[1].querySelector('span').textContent = bitcoin
+
     if (dricons.length) {
       shadow.querySelector('.btc-icon').innerHTML = dricons[0]  // btc.svg
       shadow.querySelector('.lightning-icon').innerHTML = dricons[1] // lightning.svg
     }
   }
 
-  function iconject (data) {
+  function iconject(data) {
     dricons = data
   }
 }
 
 // ============ Fallback Setup for STATE ============
 
-function fallback_module () {
+function fallback_module() {
   return {
     api: fallback_instance
   }
 
-  function fallback_instance (opts ) {
+  function fallback_instance(opts) {
     if (!opts) opts = {}
     if (!opts.value) opts.value = {}
 
     return {
       drive: {
-        'icons/':{
-          'btc.svg':{
+        'icons/': {
+          'btc.svg': {
             '$ref': 'btc.svg'
           },
-          'lightning.svg':{
+          'lightning.svg': {
             '$ref': 'lightning.svg'
           }
         },
         'style/': {
           'total_wealth.css': {
-           '$ref':'total_wealth.css'
+            '$ref': 'total_wealth.css'
           }
         },
         'data/': {
@@ -7523,7 +7853,7 @@ function fallback_module () {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/total_wealth/total_wealth.js")
-},{"STATE":57,"btc_usd_rate":7}],50:[function(require,module,exports){
+},{"STATE":59,"btc_usd_rate":7}],51:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7654,7 +7984,7 @@ function fallback_module () {
 
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_history/transaction_history.js")
-},{"STATE":57,"transaction_row":53}],51:[function(require,module,exports){
+},{"STATE":59,"transaction_row":54}],52:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7662,12 +7992,16 @@ const { sdb, get } = statedb(fallback_module)
 
 const transaction_row = require('transaction_row')
 const transaction_history = require('transaction_history')
-
+const transaction_receipt = require('transaction_receipt')
+const net = require('net_helper')
+const ws_client = require('ws_client')
 module.exports = transaction_list
 
 async function transaction_list(opts = {}, protocol) {
   const { id, sdb } = await get(opts.sid)
   const { drive } = sdb
+  const { io, _ } = net(id || 'fallback/transaction_list')
+  io.accept(ws_client.invite)
 
   const on = { style: inject, data: ondata }
 
@@ -7687,6 +8021,10 @@ async function transaction_list(opts = {}, protocol) {
       <div class="transaction-history-body"></div>
     </div>
 
+    <div class="tx-receipt-overlay hidden">
+      <div class="tx-receipt-body"></div>
+    </div>
+
     <style></style>
   `
 
@@ -7697,10 +8035,17 @@ async function transaction_list(opts = {}, protocol) {
   const historyBody = shadow.querySelector('.transaction-history-body')
 
   let historyMounted = false
+  let receiptMounted = false
+
+  const wait = {}
+  const receiptOverlay = shadow.querySelector('.tx-receipt-overlay')
+  const receiptBody = shadow.querySelector('.tx-receipt-body')
+  let receiptComponent = null
+  io.on.backend = io_transaction_list()
 
   const subs = await sdb.watch(onbatch)
 
-  // render small list
+  // render small list (fallback/initial)
   subs.slice(1, 5).forEach(async sub => {
     listBody.append(await transaction_row(sub))
   })
@@ -7718,7 +8063,151 @@ async function transaction_list(opts = {}, protocol) {
     }
   })
 
+  // Expose _update method for real transaction data
+  // Accepts an array of tx objects: [{ tid, ttime, tamount, avatar, dateString }, ...]
+  el._update = async function (txArray) {
+    if (!Array.isArray(txArray)) return
+
+    // Clear existing rows
+    listBody.innerHTML = ''
+
+    if (txArray.length === 0) {
+      listBody.innerHTML = '<div style="text-align:center; color:gray; padding:20px; font-size:14px;">No transactions yet</div>'
+      return
+    }
+
+    // Show up to 4 transactions in the small list
+    const display = txArray.slice(0, 4)
+    for (const tx of display) {
+      const rowEl = document.createElement('div')
+      const rowShadow = rowEl.attachShadow({ mode: 'closed' })
+
+      // Determine avatar
+      let avatar = tx.avatar || ''
+      const isRandom = !avatar && _isRandomString(tx.tid)
+      if (!avatar) {
+        avatar = isRandom
+          ? `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tx.tid)}`
+          : 'https://cdn-icons-png.flaticon.com/512/847/847969.png'
+      }
+
+      const displayTid = _shortenTid(tx.tid || 'Unknown')
+      const dateLabel = _getDateLabel(tx.dateString)
+
+      rowShadow.innerHTML = `
+        <div class="transaction-row">
+          <div class="transaction-detail">
+            <div class="transaction-avatar">
+              <img src="${avatar}" alt="avatar" />
+            </div>
+            <div class="transaction-data">
+              <div class="transaction-id">${displayTid}</div>
+              <div class="transaction-time">${tx.ttime || '—'}</div>
+              <div class="transaction-date">${dateLabel}</div>
+            </div>
+          </div>
+          <div class="transaction-amount">
+            <span>${tx.tamount || '0'} ₿</span>
+          </div>
+        </div>
+        <style>
+          .transaction-id { font-size: 20px; margin-top: 2px; }
+          .transaction-row { display: flex; flex-direction: row; align-items: start; justify-content: space-between; margin-top: 12px; font-size: 14px; padding: 1%; border-radius: 8px; transition: background-color 0.3s; }
+          .transaction-row:hover { background-color: #f0f0f0; cursor: pointer; }
+          .transaction-detail { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+          .transaction-avatar img { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+          .transaction-data { display: flex; flex-direction: column; text-align: start; }
+          .transaction-time { color: gray; text-align: start; }
+          .transaction-date { color: gray; font-size: 12px; }
+          .transaction-amount { font-size: 20px; }
+        </style>
+      `
+      rowEl.addEventListener('click', function () { showDetail(tx, subs) })
+      listBody.append(rowEl)
+    }
+
+    // Reset overlay history so it can rebuild with real data on next open
+    if (historyMounted) {
+      historyBody.innerHTML = ''
+      historyMounted = false
+    }
+  }
+
   return el
+
+  function io_transaction_list () {
+    return protocol_fn
+    function protocol_fn (m) {
+      const mid = m.head?.[2]
+      if (mid === undefined) return
+      const handler = wait[mid]
+      if (!handler) return
+      delete wait[mid]
+      handler(m)
+    }
+  }
+
+  async function showDetail (tx, subs) {
+    if (!receiptOverlay) return
+    // Show overlay immediately — don't wait for async work
+    receiptOverlay.classList.remove('hidden')
+    // Mount receipt component once; transaction_receipt sub is the LAST sub in subs
+    if (!receiptMounted && subs && subs.length) {
+      try {
+        const receiptSub = subs[subs.length - 1]
+        receiptComponent = await transaction_receipt(receiptSub, {
+          onClose: function () { receiptOverlay.classList.add('hidden') }
+        })
+        if (receiptBody) receiptBody.append(receiptComponent)
+        receiptMounted = true
+      } catch (e) {
+        console.error('transaction_receipt mount error:', e)
+      }
+    }
+    if (receiptComponent && receiptComponent._update) {
+      receiptComponent._update([{ label: 'Loading...', value: '' }])
+    }
+    if (!tx.txid) {
+      if (receiptComponent && receiptComponent._update) {
+        receiptComponent._update(buildRows(null, tx))
+      }
+      return
+    }
+    const head = _['backend']('get_tx_details_from_btcnode', {}, { tx_id: tx.txid })
+    wait[head[2]] = function (m) {
+      if (receiptComponent && receiptComponent._update) {
+        receiptComponent._update(buildRows(m.data?.data, tx))
+      }
+    }
+  }
+
+  function buildRows (txData, tx) {
+    if (txData) {
+      const date = txData.time ? new Date(txData.time * 1000) : null
+      const timeStr = date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '-'
+      const addr = txData.details?.[0]?.address || '-'
+      const category = txData.details?.[0]?.category || ''
+      const isSend = category === 'send'
+      const totalAmt = Math.abs(txData.amount || 0)
+      const fee = Math.abs(txData.fee || 0)
+      const recipientAmt = isSend ? (totalAmt - fee).toFixed(8) : totalAmt.toFixed(8)
+      const txid = txData.txid || tx.txid || ''
+      return [
+        { label: 'Sent By', value: isSend ? (tx.tid || 'Me') : addr },
+        { label: 'Sent To', value: isSend ? (addr.slice(0, 8) + '...' + addr.slice(-4)) : (tx.tid || 'Me') },
+        { label: 'Time & Date', value: timeStr },
+        { label: 'Transaction Fees', value: fee.toFixed(8) + ' BTC', convert: true },
+        { label: 'Recipient Receives', value: recipientAmt + ' BTC', convert: true },
+        { label: 'Blockchain Explorer', value: 'https://mempool.space/tx/' + txid, link: true },
+        { label: 'Total Amount', value: Math.abs(txData.amount || 0).toFixed(8) + ' BTC', icon: 'btc.svg', convert: true }
+      ]
+    }
+    return [
+      { label: 'Sent By', value: tx.tid || '-' },
+      { label: 'Time & Date', value: (tx.dateString || '') + ' ' + (tx.ttime || '') },
+      { label: 'Total Amount', value: (tx.tamount || '-') + ' BTC', icon: 'btc.svg', convert: true }
+    ]
+  }
 
   function fail(data, type) {
     throw new Error('invalid message', { cause: { data, type } })
@@ -7739,6 +8228,34 @@ async function transaction_list(opts = {}, protocol) {
   }
 
   function ondata() {}
+
+  // ---- Helpers for _update rendering ----
+  function _getDateLabel(dateString) {
+    if (!dateString) return ''
+    const today = new Date()
+    const target = new Date(dateString)
+    const diffInDays = Math.floor(
+      (today.setHours(0, 0, 0, 0) - target.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+    )
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Yesterday'
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  function _shortenTid(tid) {
+    if (tid.length > 14) return tid.slice(0, 8) + '...' + tid.slice(-4)
+    return tid
+  }
+
+  function _isRandomString(str) {
+    if (!str) return true
+    if (/[0-9@#$_-]/.test(str)) return true
+    if (str.length > 12 && !/\s/.test(str)) return true
+    const upper = (str.match(/[A-Z]/g) || []).length
+    const lower = (str.match(/[a-z]/g) || []).length
+    if ((upper > 4 && lower > 4) && !/\s/.test(str)) return true
+    return false
+  }
 }
 
 function fallback_module () {
@@ -7747,11 +8264,13 @@ function fallback_module () {
     _: {
       'transaction_history':{ $: ''},
       'transaction_row':{ $: '' },
+      'transaction_receipt': { $: '' },
+      'ws_client': { $: '' },
     } 
   }
   function api(opts){
     if (!opts) opts = {}
-    if (!opts.value) opts.value = {}
+    if (!Array.isArray(opts.value)) opts.value = []
 
     const transaction_history = {
       mapping: {
@@ -7832,7 +8351,11 @@ function fallback_module () {
       },
       _:{
         transaction_history,
-        transaction_row
+        transaction_row,
+        transaction_receipt: {
+          mapping: { style: 'style', data: 'data', icons: 'icons' },
+          0: { value: [] }
+        }
       }
     }
   }
@@ -7840,7 +8363,7 @@ function fallback_module () {
 
 
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_list/transaction_list.js")
-},{"STATE":57,"transaction_history":50,"transaction_row":53}],52:[function(require,module,exports){
+},{"STATE":59,"net_helper":30,"transaction_history":51,"transaction_receipt":53,"transaction_row":54,"ws_client":58}],53:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -7850,7 +8373,7 @@ const receipt_row = require('receipt_row')
 
 module.exports = transaction_receipt
 
-async function transaction_receipt(opts = {}, {onClose} = {}) {
+async function transaction_receipt(opts = {}, { onClose } = {}) {
   const { id, sdb } = await get(opts.sid)
   const { drive } = sdb
 
@@ -7885,14 +8408,54 @@ async function transaction_receipt(opts = {}, {onClose} = {}) {
   const subs = await sdb.watch(onbatch)
 
   for (let i = 0; i < subs.length; i++) {
-    const row = await receipt_row(subs[i]) 
+    const row = await receipt_row(subs[i])
     rows_el.append(row)
   }
-  const close_icon = shadow.querySelector('.close-icon')
 
+  const close_icon = shadow.querySelector('.close-icon')
   close_icon.addEventListener('click', () => {
     if (onClose) onClose()
   })
+
+  // _update function
+  el._update = function (rows) {
+    rows_el.innerHTML = ''
+    rows.forEach(function (r) {
+      const host = document.createElement('div')
+      const s = host.attachShadow({ mode: 'open' })
+      const isLink = !!r.link
+      const isTotal = !!r.icon
+      const valHtml = isLink
+        ? '<a class="receipt-link" href="' + r.value + '" target="_blank">' + r.value + '</a>'
+        : '<span>' + (r.value || '') + '</span>'
+      const convertHtml = r.convert
+        ? '<div class="convert-buttons"><button class="convert-btn btc active">BTC</button><button class="convert-btn usd">USD</button></div>'
+        : ''
+      s.innerHTML = `
+        <div class="receipt-row ${isTotal ? 'total' : ''} ${isLink ? 'link' : ''}">
+          <div class="receipt-label">${r.label}</div>
+          <div class="receipt-bottom">
+            <div class="receipt-value">${valHtml}</div>
+            ${convertHtml}
+          </div>
+          ${!isTotal ? '<div class="divider"></div>' : ''}
+        </div>
+        <style>
+          .receipt-row { padding: 14px 0; }
+          .receipt-label { color: #999; font-size: 13px; margin-bottom: 6px; }
+          .receipt-value { font-size: 16px; font-weight: 600; color: #111; word-break: break-all; }
+          .receipt-row.total .receipt-value { font-size: 20px; }
+          .receipt-link { color: #6200ea; text-decoration: underline; font-weight: 400; }
+          .receipt-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+          .divider { height: 1px; background: #f0f0f0; margin-top: 14px; }
+          .convert-buttons { display: flex; gap: 6px; flex-shrink: 0; }
+          .convert-btn { border: none; background: none; font-size: 13px; font-weight: 600; color: #aaa; cursor: pointer; padding: 2px 4px; }
+          .convert-btn.active { color: #111; text-decoration: underline; }
+        </style>
+      `
+      rows_el.append(host)
+    })
+  }
 
   return el
 
@@ -7908,7 +8471,6 @@ async function transaction_receipt(opts = {}, {onClose} = {}) {
     }
   }
 
-
   function inject(data) {
     style.textContent = data[0]
   }
@@ -7917,13 +8479,11 @@ async function transaction_receipt(opts = {}, {onClose} = {}) {
     dricons = data
     const btcIcons = shadow.querySelectorAll('.btc-icon-small')
     const closeIcon = shadow.querySelector('.close-icon')
-
     btcIcons.forEach(el => el.innerHTML = dricons[0])
-    closeIcon.innerHTML = dricons[1]                  
+    closeIcon.innerHTML = dricons[1]
   }
 
-  async function ondata(data) {
-    
+  function ondata(data) {
   }
 }
 
@@ -7931,19 +8491,15 @@ function fallback_module() {
   return {
     api,
     _: {
-      'receipt_row': { 
-        $: '' 
-      }
+      'receipt_row': { $: '' }
     }
   }
 
- function api(opts = {}) {
-    // Default row when nothing is provided
+  function api(opts = {}) {
     const defaultValue = [
-      { label: "Default Label", value: "Default value" }
+      { label: 'Default Label', value: 'Default value' }
     ]
 
-    // Use defaults if opts.value is missing or not an array
     const value = Array.isArray(opts.value) && opts.value.length
       ? opts.value
       : defaultValue
@@ -7978,7 +8534,7 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_receipt/transaction_receipt.js")
-},{"STATE":57,"receipt_row":34}],53:[function(require,module,exports){
+},{"STATE":59,"receipt_row":35}],54:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -8183,7 +8739,7 @@ function fallback_module () {
 }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/transaction_row/transaction_row.js")
-},{"STATE":57,"transaction_receipt":52}],54:[function(require,module,exports){
+},{"STATE":59,"transaction_receipt":53}],55:[function(require,module,exports){
 //https://github.com/chuckfairy/VanillaQR.js
 //VanillaQR Function constructor
 //pass an object with customizable options
@@ -9226,7 +9782,7 @@ VanillaQR.N4 = 10;
 
 module.exports = { VanillaQR };
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -9335,7 +9891,7 @@ function defaults() {
   }
 }
 }).call(this)}).call(this,"/node_modules/flamingo-ui/src/node_modules/wallet/index.js")
-},{"STATE":57,"home_page":19}],56:[function(require,module,exports){
+},{"STATE":59,"home_page":19}],57:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -9418,6 +9974,13 @@ async function wallet_button(opts = {}, protocol) {
     data: { name: 'Wallet', action: 'wallet_action' }
   })
 
+  // Expose _update to forward real balance data to switch_account
+  el._update = function ({ btc, lightning }) {
+    if (switch_el && switch_el._update) {
+      switch_el._update({ btc, lightning })
+    }
+  }
+
   // -------------------- Return element --------------------
   return el
 
@@ -9487,9 +10050,87 @@ function fallback_module() {
   }
 }
 }).call(this)}).call(this,"/../flamingo-ui/src/node_modules/wallet_button/wallet_button.js")
-},{"STATE":57,"general_button":17,"switch_account":45}],57:[function(require,module,exports){
+},{"STATE":59,"general_button":17,"switch_account":46}],58:[function(require,module,exports){
+const net = require('net_helper')
+const wsUrl = 'ws://localhost:8080'
 
-},{}],58:[function(require,module,exports){
+const { io, _ } = net('frontend')
+let ws
+
+// Protocol for components sending messages TO the backend
+io.on.backend = function (M) {
+  if (ws && ws.readyState === 1) { // 1 === OPEN
+    ws.send(JSON.stringify(M))
+  } else {
+    console.warn(`ws_client: WebSocket not ready (Status: ${ws ? ws.readyState : 'null'})`)
+  }
+}
+
+// Dummy protocol to get a routing function for messages FROM the backend
+io.on.ws_in = function () {}
+const ws_tx = Object.assign(function(){}, { id: 'ws_peer' })
+const ws_rx = io.invite('ws_in', { ws_in: 'frontend' })(ws_tx)
+
+function connect() {
+  if (typeof window === 'undefined' || !window.WebSocket) return
+
+  ws = new window.WebSocket(wsUrl)
+
+  ws.onopen = () => console.log('ws_client: ✅ Connected to', wsUrl)
+  
+  ws.onclose = () => {
+    console.log('ws_client: ❌ Disconnected — retrying in 2s...')
+    setTimeout(connect, 2000)
+  }
+  
+  ws.onerror = (err) => console.error('ws_client: ⚠️ WebSocket error:', err)
+  
+  ws.onmessage = (ev) => {
+    try {
+      const M = JSON.parse(ev.data)
+      // The backend will echo its own ID in head[0]. We rewrite it to 'frontend'
+      // so the child component recognizes it as coming from its hub connection.
+      if (M.head) {
+        M.head[0] = 'frontend'
+      }
+      ws_rx(M)
+    } catch (err) {
+      console.error('ws_client: message parse error', err)
+    }
+  }
+}
+
+connect()
+
+module.exports = {
+  invite: io.invite('backend', { backend: 'frontend' })
+}
+
+// ============ Fallback Setup for STATE ============
+function fallback_module() {
+  return {
+    api: fallback_instance
+  }
+  function fallback_instance(opts) {
+    if (!opts) opts = {}
+    if (!opts.value) opts.value = {}
+    return {
+      drive: {
+        'data/': {
+          'opts.json': {
+            raw: opts || {}
+          }
+        }
+      },
+      _: {}
+    }
+  }
+}
+
+
+},{"net_helper":30}],59:[function(require,module,exports){
+
+},{}],60:[function(require,module,exports){
 (function (__filename){(function (){
 const STATE = require('STATE')
 const statedb = STATE(__filename)
@@ -9516,4 +10157,4 @@ function defaults() {
   }
 }
 }).call(this)}).call(this,"/web/page.js")
-},{"STATE":57,"flamingo-ui":55}]},{},[58]);
+},{"STATE":59,"flamingo-ui":56}]},{},[60]);
